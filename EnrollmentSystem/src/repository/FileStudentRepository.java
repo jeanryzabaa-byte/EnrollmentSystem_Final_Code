@@ -1,8 +1,8 @@
 package repository;
 
-import model.Student;
 import java.io.*;
 import java.util.ArrayList;
+import model.Student;
 
 public class FileStudentRepository implements StudentRepository {
     private final String fileName = "data/students.txt";
@@ -20,7 +20,7 @@ public class FileStudentRepository implements StudentRepository {
         }
     }
 
-    @Override
+    
     public void saveStudent(Student student) throws IOException {
         try (BufferedWriter writer =
                      new BufferedWriter(new FileWriter(fileName, true))) {
@@ -30,7 +30,6 @@ public class FileStudentRepository implements StudentRepository {
         }
     }
 
-    @Override
     public ArrayList<Student> getAllStudents() throws IOException {
         ArrayList<Student> students = new ArrayList<>();
 
