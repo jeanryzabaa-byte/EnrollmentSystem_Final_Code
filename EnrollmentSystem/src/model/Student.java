@@ -6,7 +6,6 @@ public class Student extends Enrollment {
     private final String course;
 
     public Student(String name, String id, String course) {
-        super(name, id);
         this.name = name;
         this.id = id;
         this.course = course;
