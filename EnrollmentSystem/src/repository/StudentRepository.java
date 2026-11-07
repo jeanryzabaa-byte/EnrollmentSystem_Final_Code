@@ -1,8 +1,8 @@
 package repository;
 
-import model.Student;
 import java.io.IOException;
 import java.util.ArrayList;
+import model.Student;
 
 public interface StudentRepository {
     void saveStudent(Student student) throws IOException;
