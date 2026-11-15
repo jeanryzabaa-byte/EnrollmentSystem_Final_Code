@@ -5,11 +5,12 @@ public class Student extends Enrollment {
     private final String id;
     private final String course;
 
-    public Student(String name, String id, String course) {
-        this.name = name;
-        this.id = id;
-        this.course = course;
-    }
+   public Student(String name, String id, String course) {
+    super(id, course); // I-check sa Enrollment.java kung (id, course) ba o (name, course) ang una
+    this.name = name;
+    this.id = id;
+    this.course = course;
+}
 
     public String getName() {
         return name;
