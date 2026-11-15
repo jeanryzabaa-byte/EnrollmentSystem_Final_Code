@@ -1,10 +1,9 @@
-import java.util.Scanner;
-
-import view.EnrollmentMenu;
 import controller.EnrollmentController;
-import service.EnrollmentService;
-import repository.StudentRepository;
+import java.util.Scanner;
 import repository.FileStudentRepository;
+import repository.StudentRepository;
+import service.EnrollmentService;
+import view.EnrollmentMenu;
 
 public class Main {
     public static void main(String[] args) {
