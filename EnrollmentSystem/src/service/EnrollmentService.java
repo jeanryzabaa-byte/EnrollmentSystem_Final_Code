@@ -12,7 +12,7 @@ public class EnrollmentService {
         this.repository = repository;
     }
 
-    public void registerStudent(String id, String name, int yearLevel, String birthday, String course) 
+    public void registerStudent(String id, String name, String yearLevel, String birthday, String course) 
             throws IOException {
         if (repository.studentExists(id)) {
             throw new IllegalArgumentException("Student ID already exists!");
