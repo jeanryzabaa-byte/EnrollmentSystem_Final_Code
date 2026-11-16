@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import model.Student;
 
 public class FileStudentRepository implements StudentRepository {
-
-    
     private String filePath = "data/students.txt";
 
     @Override
@@ -41,8 +39,30 @@ public class FileStudentRepository implements StudentRepository {
 
     @Override
     public void saveStudent(Student student) throws IOException {
+        File dir = new File("data");
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, true))) {
-            writer.println(student.getId() + "|" + student.getLastName() + "|" + student.getFirstName() + "|" + student.getMiddleName() + "|" + student.getYearLevel() + "|" + student.getBirthday() + "|" + 
-                student.getCourse());
+            writer.println(student.getId() + "|" + 
+                           student.getLastName() + "|" + 
+                           student.getFirstName() + "|" + 
+                           student.getMiddleName() + "|" + 
+                           student.getYearLevel() + "|" + 
+                           student.getBirthday() + "|" + 
+                           student.getCourse());
         }
     }
+
+    @Override
+    public boolean studentExists(String id) throws IOException {
+        ArrayList<Student> students = getAllStudents();
+        for (Student s : students) {
+            if (s.getId().equals(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
