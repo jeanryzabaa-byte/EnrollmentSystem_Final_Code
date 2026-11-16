@@ -33,7 +33,7 @@ public class EnrollmentController {
         String name = scanner.nextLine();
 
         // 1. Year Level
-        System.out.print("Enter Year Level (1, 2, 3, or 4): ");
+        System.out.print("Enter Year Level (1st yr, 2nd yr, 3rd yr, or 4th yr): ");
         int yearLevel = scanner.nextInt();
         scanner.nextLine(); // Clear buffer
 
