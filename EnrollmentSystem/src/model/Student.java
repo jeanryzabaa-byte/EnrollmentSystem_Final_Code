@@ -1,15 +1,15 @@
 package model;
 
 public class Student {
-    private String studentId;
+    private String id;
     private String name;
     private int yearLevel;     // Bag-o
     private String birthday;   // Bag-o
     private String course;     // Bag-o
 
-    // Updated Constructor
-    public Student(String studentId, String name, int yearLevel, String birthday, String course) {
-        this.studentId = studentId;
+    // Constructor
+    public Student(String id, String name, int yearLevel, String birthday, String course) {
+        this.id = id;
         this.name = name;
         this.yearLevel = yearLevel;
         this.birthday = birthday;
@@ -17,19 +17,10 @@ public class Student {
     }
 
     // Getters
-    public String getStudentId() { return studentId; }
+    public String getId() { return id; }
     public String getName() { return name; }
     public int getYearLevel() { return yearLevel; }
     public String getBirthday() { return birthday; }
     public String getCourse() { return course; }
 
-    // Para nindot tan-awon ig display/print
-    @Override
-    public String toString() {
-        return "ID: " + studentId + 
-               " | Name: " + name + 
-               " | Year: " + yearLevel + 
-               " | Birthday: " + birthday + 
-               " | Course: " + course;
-    }
 }
