@@ -18,8 +18,11 @@ public class EnrollmentController {
     }
 
     public void start() {
-
-
+        try {
+            addStudentData();
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 
     public void addStudentData() throws IOException {
