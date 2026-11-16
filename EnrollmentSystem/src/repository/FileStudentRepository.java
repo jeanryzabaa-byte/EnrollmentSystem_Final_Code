@@ -24,7 +24,7 @@ public class FileStudentRepository implements StudentRepository {
         if (data.length >= 5) {
     String id = data[0];
     String name = data[1];
-    String yearLevel = data[2]; // Gihimo na nga String, walay Integer.parseInt
+    String yearLevel = data[2];
     String birthday = data[3];
     String course = data[4];
     
