@@ -1,9 +1,9 @@
 package service;
 
-import model.Student;
-import repository.StudentRepository;
 import java.io.IOException;
 import java.util.ArrayList;
+import model.Student;
+import repository.StudentRepository;
 
 public class EnrollmentService {
     private final StudentRepository repository;
@@ -19,6 +19,10 @@ public class EnrollmentService {
         }
 
         Student student = new Student(id, name, yearLevel, birthday, course);
-        
         repository.saveStudent(student);
     }
+
+    public ArrayList<Student> viewStudents() throws IOException {
+        return repository.getAllStudents();
+    }
+}
