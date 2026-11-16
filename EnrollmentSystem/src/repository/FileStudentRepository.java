@@ -21,15 +21,15 @@ public class FileStudentRepository implements StudentRepository {
             while ((line = reader.readLine()) != null) {
                 String[] data = line.split("\\|", -1);
         
-                if (data.length >= 5) {
-                    String id = data[0];
-                    String name = data[1];
-                    int yearLevel = Integer.parseInt(data[2]);
-                    String birthday = data[3];
-                    String course = data[4];
-                    
-                    students.add(new Student(id, name, yearLevel, birthday, course));
-                }
+        if (data.length >= 5) {
+    String id = data[0];
+    String name = data[1];
+    String yearLevel = data[2]; // Gihimo na nga String, walay Integer.parseInt
+    String birthday = data[3];
+    String course = data[4];
+    
+    students.add(new Student(id, name, yearLevel, birthday, course));
+}
             }
         }
         return students;
