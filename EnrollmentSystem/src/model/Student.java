@@ -1,39 +1,35 @@
 package model;
 
-public class Student extends Enrollment {
-    private final String name;
-    private final String id;
-    private final String course;
+public class Student {
+    private String studentId;
+    private String name;
+    private int yearLevel;     // Bag-o
+    private String birthday;   // Bag-o
+    private String course;     // Bag-o
 
-   public Student(String name, String id, String course) {
-    super(id, course); // I-check sa Enrollment.java kung (id, course) ba o (name, course) ang una
-    this.name = name;
-    this.id = id;
-    this.course = course;
-}
-
-    public String getName() {
-        return name;
+    // Updated Constructor
+    public Student(String studentId, String name, int yearLevel, String birthday, String course) {
+        this.studentId = studentId;
+        this.name = name;
+        this.yearLevel = yearLevel;
+        this.birthday = birthday;
+        this.course = course;
     }
 
-    public String getId() {
-        return id;
-    }
+    // Getters
+    public String getStudentId() { return studentId; }
+    public String getName() { return name; }
+    public int getYearLevel() { return yearLevel; }
+    public String getBirthday() { return birthday; }
+    public String getCourse() { return course; }
 
-    public String getCourse() {
-        return course;
-    }
-
+    // Para nindot tan-awon ig display/print
     @Override
-    public void enroll() {
-        System.out.println("Student successfully enrolled!");
-    }
-
-    public void displayInfo() {
-        System.out.println("------------------------------");
-        System.out.println("Student ID : " + id);
-        System.out.println("Name       : " + name);
-        System.out.println("Course     : " + course);
-        System.out.println("------------------------------");
+    public String toString() {
+        return "ID: " + studentId + 
+               " | Name: " + name + 
+               " | Year: " + yearLevel + 
+               " | Birthday: " + birthday + 
+               " | Course: " + course;
     }
 }
