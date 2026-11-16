@@ -3,12 +3,11 @@ package model;
 public class Student {
     private String id;
     private String name;
-    private int yearLevel;    
-    private String birthday;   
-    private String course;     
+    private String yearLevel; 
+    private String birthday;
+    private String course;
 
-    // Constructor
-    public Student(String id, String name, int yearLevel, String birthday, String course) {
+    public Student(String id, String name, String yearLevel, String birthday, String course) {
         this.id = id;
         this.name = name;
         this.yearLevel = yearLevel;
@@ -16,14 +15,13 @@ public class Student {
         this.course = course;
     }
 
-
     public String getId() { return id; }
     public String getName() { return name; }
-    public int getYearLevel() { return yearLevel; }
+    public String getYearLevel() { return yearLevel; } 
     public String getBirthday() { return birthday; }
     public String getCourse() { return course; }
 
     public void displayInfo() {
-    System.out.println("ID: " + id + " | Name: " + name + " | Year: " + yearLevel + " | Birthday: " + birthday + " | Course: " + course);
-}
+        System.out.println("ID: " + id + " | Name: " + name + " | Year: " + yearLevel + " | Birthday: " + birthday + " | Course: " + course);
+    }
 }
