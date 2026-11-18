@@ -45,9 +45,7 @@ public class FileStudentRepository implements StudentRepository {
         }
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, true))) {
-            writer.println(student.getId() + "|" + 
-                           student.getLastName() + "|" + 
-                           student.getFirstName() + "|" + 
+            writer.println(student.getId() + "|" + student.getLastName() + "|" + student.getFirstName() + "|" + 
                            student.getMiddleName() + "|" + 
                            student.getYearLevel() + "|" + 
                            student.getBirthday() + "|" + 
