@@ -81,13 +81,12 @@ String gender = scanner.nextLine();
 System.out.print("Enter Religion: ");
 String religion = scanner.nextLine();
 
-System.out.print("Enter Home Address: ");
-String homeAddress = scanner.nextLine();
-
-        try {
-    service.registerStudent(id, lastName, firstName, middleName, yearLevel, birthday, course,
-                            age, gender, religion, homeAddress);
-    System.out.println("\nStudent successfully enrolled!");
-} catch (IllegalArgumentException e) {
-    System.out.println("\nEnrollment Failed: " + e.getMessage());
+try {
+            service.registerStudent(id, lastName, firstName, middleName, yearLevel, birthday, course,
+                                    age, gender, religion, homeAddress);
+            System.out.println("\nStudent successfully enrolled!");
+        } catch (IllegalArgumentException e) {
+            System.out.println("\nEnrollment Failed: " + e.getMessage());
+        }
+    }
 }
