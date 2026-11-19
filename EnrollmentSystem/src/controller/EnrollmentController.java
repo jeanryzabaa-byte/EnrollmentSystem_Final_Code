@@ -25,6 +25,9 @@ public class EnrollmentController {
     }
 
     public void addStudentData() throws IOException {
+        System.out.println("\n========================================");
+        System.out.println("        STUDENT ENROLLMENT SYSTEM       ");
+        System.out.println("========================================");
         System.out.print("Enter Student ID: ");
         String id = scanner.nextLine();
 
