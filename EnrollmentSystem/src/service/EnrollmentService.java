@@ -18,6 +18,7 @@ public class EnrollmentService {
         throw new IllegalArgumentException("Student ID already exists!");
     }
 
-    Student student = new Student(id, lastName, firstName, middleName, yearLevel, birthday, course,
-                age, gender, religion, homeAddress); repository.saveStudent(student);
+    Student student = new Student(id, lastName, firstName, middleName, yearLevel, birthday, course,  age, gender, religion, homeAddress);
+        repository.saveStudent(student);
+    }
 }
