@@ -71,16 +71,17 @@ public class EnrollmentController {
                 course = "Undeclared";
                 break;
         }
+System.out.print("Enter Age: ");
+        int age = Integer.parseInt(scanner.nextLine());
 
-        System.out.print("Enter Age: ");
-int age = Integer.parseInt(scanner.nextLine());
+        System.out.print("Enter Gender: ");
+        String gender = scanner.nextLine();
 
-System.out.print("Enter Gender (Male/Female): ");
-String gender = scanner.nextLine();
+        System.out.print("Enter Religion: ");
+        String religion = scanner.nextLine();
 
-System.out.print("Enter Religion: ");
-String religion = scanner.nextLine();
-
+        System.out.print("Enter Home Address: ");
+        String homeAddress = scanner.nextLine();
 try {
             service.registerStudent(id, lastName, firstName, middleName, yearLevel, birthday, course,
                                     age, gender, religion, homeAddress);
