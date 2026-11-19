@@ -43,6 +43,7 @@ public class EnrollmentController {
         System.out.print("Enter Birthday (MM/DD/YYYY): ");
         String birthday = scanner.nextLine();
 
+
         System.out.println("\nSelect Course:");
         System.out.println("[1] BSIT - Bachelor of Science in Information Technology");
         System.out.println("[2] BSCS - Bachelor of Science in Computer Science");
@@ -71,11 +72,22 @@ public class EnrollmentController {
                 break;
         }
 
+        System.out.print("Enter Age: ");
+int age = Integer.parseInt(scanner.nextLine()); // gamit og nextLine() para dili mo-skip ang sunod nga input!
+
+System.out.print("Enter Gender (Male/Female): ");
+String gender = scanner.nextLine();
+
+System.out.print("Enter Religion: ");
+String religion = scanner.nextLine();
+
+System.out.print("Enter Home Address: ");
+String homeAddress = scanner.nextLine();
+
         try {
-            service.registerStudent(id, lastName, firstName, middleName, yearLevel, birthday, course);
-            System.out.println("\nStudent successfully enrolled!");
-        } catch (IllegalArgumentException e) {
-            System.out.println("\nEnrollment Failed: " + e.getMessage());
-        }
-    }
+    service.registerStudent(id, lastName, firstName, middleName, yearLevel, birthday, course,
+                            age, gender, religion, homeAddress);
+    System.out.println("\nStudent successfully enrolled!");
+} catch (IllegalArgumentException e) {
+    System.out.println("\nEnrollment Failed: " + e.getMessage());
 }
