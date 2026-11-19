@@ -73,7 +73,7 @@ public class EnrollmentController {
         }
 
         System.out.print("Enter Age: ");
-int age = Integer.parseInt(scanner.nextLine()); // gamit og nextLine() para dili mo-skip ang sunod nga input!
+int age = Integer.parseInt(scanner.nextLine());
 
 System.out.print("Enter Gender (Male/Female): ");
 String gender = scanner.nextLine();
