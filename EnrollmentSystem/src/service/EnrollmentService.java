@@ -19,6 +19,5 @@ public class EnrollmentService {
     }
 
     Student student = new Student(id, lastName, firstName, middleName, yearLevel, birthday, course,
-                age, gender, religion, homeAddress);
-    repository.save(student); 
+                age, gender, religion, homeAddress); repository.saveStudent(student);
 }
