@@ -13,7 +13,7 @@ public class EnrollmentMenu {
 
     public void displayMenu() {
         System.out.println("\n----------------------------------------");
-        System.out.println("      *** STUDENT MANAGEMENT SYSTEM ***   ");
+        System.out.println("      *** STUDENT ENROLLMENT SYSTEM ***   ");
         System.out.println("----------------------------------------");
         System.out.println("1. Add New Student");
         System.out.println("2. Display All Student");
