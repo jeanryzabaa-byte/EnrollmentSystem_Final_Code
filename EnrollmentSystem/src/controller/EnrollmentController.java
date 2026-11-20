@@ -85,6 +85,28 @@ System.out.print("Enter Age: ");
 
         System.out.print("Enter Home Address: ");
         String homeAddress = scanner.nextLine();
+        System.out.print("Enter Citizenship: ");
+        String citizenship = scanner.nextLine();
+
+        System.out.print("Enter School Year (e.g. 2026-2027): ");
+        String schoolYear = scanner.nextLine();
+
+        System.out.print("Enter Place of Birth: ");
+        String placeOfBirth = scanner.nextLine();
+
+        System.out.print("Is Transferee? (Y/N): ");
+        String transInput = scanner.nextLine().trim();
+        boolean transferee = transInput.equalsIgnoreCase("Y") || transInput.equalsIgnoreCase("YES");
+
+        String lastSchoolName = "";
+        String lastSchoolAddress = "";
+        if (transferee) {
+            System.out.print("Enter Name of Last School: ");
+            lastSchoolName = scanner.nextLine();
+
+            System.out.print("Enter Address of Last School: ");
+            lastSchoolAddress = scanner.nextLine();
+        }
 try {
             service.registerStudent(id, lastName, firstName, middleName, yearLevel, birthday, course,
                                     age, gender, religion, homeAddress);
