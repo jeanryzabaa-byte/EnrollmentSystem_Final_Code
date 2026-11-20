@@ -108,8 +108,13 @@ System.out.print("Enter Age: ");
             lastSchoolAddress = scanner.nextLine();
         }
 try {
-            service.registerStudent(id, lastName, firstName, middleName, yearLevel, birthday, course,
-                                    age, gender, religion, homeAddress);
+            service.registerStudent(
+                    id, lastName, firstName, middleName,
+                    yearLevel, birthday, course, age,
+                    gender, religion, homeAddress,
+                    citizenship, schoolYear, placeOfBirth,
+                    transferee, lastSchoolName, lastSchoolAddress
+                );
             System.out.println("\nStudent successfully enrolled!");
         } catch (IllegalArgumentException e) {
             System.out.println("\nEnrollment Failed: " + e.getMessage());
