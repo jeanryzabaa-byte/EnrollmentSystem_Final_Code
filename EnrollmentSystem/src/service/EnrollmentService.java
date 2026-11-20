@@ -12,8 +12,10 @@ public class EnrollmentService {
     }
 
     public void registerStudent(String id, String lastName, String firstName, String middleName,
-                            String yearLevel, String birthday, String course,
-                            int age, String gender, String religion, String homeAddress) throws IOException {
+                                String yearLevel, String birthday, String course,
+                                int age, String gender, String religion, String homeAddress,
+                                String citizenship, String schoolYear, String placeOfBirth,
+                                boolean transferee, String lastSchoolName, String lastSchoolAddress) throws IOException {
     if (repository.studentExists(id)) {
         throw new IllegalArgumentException("Student ID already exists!");
     }
