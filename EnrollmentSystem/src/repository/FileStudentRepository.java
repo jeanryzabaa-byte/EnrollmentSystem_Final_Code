@@ -72,7 +72,74 @@ public class FileStudentRepository implements StudentRepository {
             file.getParentFile().mkdirs();
         }
 
-        String record = String.join("|",
+        String record = formatStudentRecord(student);
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
+            writer.write(record);
+            writer.newLine();
+        }
+    }
+
+    @Override
+    public void saveAllStudents(ArrayList<Student> students) throws IOException {
+        File file = new File(filePath);
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, false))) {
+            for (Student student : students) {
+                writer.write(formatStudentRecord(student));
+                writer.newLine();
+            }
+        }
+    }
+
+    @Override
+    public Student findStudentById(String id) throws IOException {
+        for (Student s : getAllStudents()) {
+            if (s.getId().equalsIgnoreCase(id.trim())) {
+                return s;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean updateStudent(Student updatedStudent) throws IOException {
+        ArrayList<Student> students = getAllStudents();
+        for (int i = 0; i < students.size(); i++) {
+            if (students.get(i).getId().equalsIgnoreCase(updatedStudent.getId().trim())) {
+                students.set(i, updatedStudent);
+                saveAllStudents(students);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean deleteStudentById(String id) throws IOException {
+        ArrayList<Student> students = getAllStudents();
+        boolean removed = students.removeIf(s -> s.getId().equalsIgnoreCase(id.trim()));
+        if (removed) {
+            saveAllStudents(students);
+        }
+        return removed;
+    }
+
+    @Override
+    public boolean studentExists(String id) throws IOException {
+        for (Student s : getAllStudents()) {
+            if (s.getId().equalsIgnoreCase(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String formatStudentRecord(Student student) {
+        return String.join("|",
             student.getId(),
             student.getLastName(),
             student.getFirstName(),
@@ -91,20 +158,5 @@ public class FileStudentRepository implements StudentRepository {
             student.getLastSchoolName(),
             student.getLastSchoolAddress()
         );
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
-            writer.write(record);
-            writer.newLine();
-        }
-    }
-
-    @Override
-    public boolean studentExists(String id) throws IOException {
-        for (Student s : getAllStudents()) {
-            if (s.getId().equalsIgnoreCase(id)) {
-                return true;
-            }
-        }
-        return false;
     }
 }
