@@ -31,39 +31,48 @@ public class FileStudentRepository implements StudentRepository {
                 String[] data = line.split("\\|", -1);
 
                 if (data.length >= 11) {
-                String id = data[0].trim();
-                String lastName = data[1].trim();
-                String firstName = data[2].trim();
-                String middleName = data[3].trim();
-                String yearLevel = data[4].trim();
-                String birthday = data[5].trim();
-                String course = data[6].trim();
-                int age = Integer.parseInt(data[7].trim());
-                String gender = data[8].trim();
-                String religion = data[9].trim();
-                String homeAddress = data[10].trim();
+                    String id = data[0].trim();
+                    String lastName = data[1].trim();
+                    String firstName = data[2].trim();
+                    String middleName = data[3].trim();
+                    String yearLevel = data[4].trim();
+                    String birthday = data[5].trim();
+                    String course = data[6].trim();
+                    int age = Integer.parseInt(data[7].trim());
+                    String gender = data[8].trim();
+                    String religion = data[9].trim();
+                    String homeAddress = data[10].trim();
 
-                String citizenship = data.length > 11 ? data[11].trim() : "Filipino";
-                String schoolYear = data.length > 12 ? data[12].trim() : "";
-                String placeOfBirth = data.length > 13 ? data[13].trim() : "";
-                boolean transferee = data.length > 14 && Boolean.parseBoolean(data[14].trim());
-                String lastSchoolName = data.length > 15 ? data[15].trim() : "";
-                String lastSchoolAddress = data.length > 16 ? data[16].trim() : "";
+                    String citizenship = data.length > 11 ? data[11].trim() : "Filipino";
+                    String schoolYear = data.length > 12 ? data[12].trim() : "";
+                    String placeOfBirth = data.length > 13 ? data[13].trim() : "";
+                    boolean transferee = data.length > 14 && Boolean.parseBoolean(data[14].trim());
+                    String lastSchoolName = data.length > 15 ? data[15].trim() : "";
+                    String lastSchoolAddress = data.length > 16 ? data[16].trim() : "";
 
-                Student student = new Student(
-                    id, lastName, firstName, middleName,
-                    yearLevel, birthday, course, age,
-                    gender, religion, homeAddress,
-                    citizenship, schoolYear, placeOfBirth,
-                    transferee, lastSchoolName, lastSchoolAddress
-                );
-                students.add(student);
-            }
+                    Student student = new Student(
+                        id, lastName, firstName, middleName,
+                        yearLevel, birthday, course, age,
+                        gender, religion, homeAddress,
+                        citizenship, schoolYear, placeOfBirth,
+                        transferee, lastSchoolName, lastSchoolAddress
+                    );
+                    students.add(student);
                 }
             }
         }
 
-     String record = String.join("|",
+        return students;
+    }
+
+    @Override
+    public void saveStudent(Student student) throws IOException {
+        File file = new File(filePath);
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+
+        String record = String.join("|",
             student.getId(),
             student.getLastName(),
             student.getFirstName(),
@@ -82,30 +91,5 @@ public class FileStudentRepository implements StudentRepository {
             student.getLastSchoolName(),
             student.getLastSchoolAddress()
         );
-            student.getFirstName(),
-            student.getMiddleName(),
-            student.getYearLevel(),
-            student.getBirthday(),
-            student.getCourse(),
-            String.valueOf(student.getAge()),
-            student.getGender(),
-            student.getReligion(),
-            student.getHomeAddress()
-        );
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
-            writer.write(record);
-            writer.newLine();
-        }
-    }
-
-    @Override
-    public boolean studentExists(String id) throws IOException {
-        for (Student s : getAllStudents()) {
-            if (s.getId().equalsIgnoreCase(id)) {
-                return true;
-            }
-        }
-        return false;
-    }
-}
+       
