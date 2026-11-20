@@ -92,4 +92,19 @@ public class FileStudentRepository implements StudentRepository {
             student.getLastSchoolAddress()
         );
 
-       
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
+            writer.write(record);
+            writer.newLine();
+        }
+    }
+
+    @Override
+    public boolean studentExists(String id) throws IOException {
+        for (Student s : getAllStudents()) {
+            if (s.getId().equalsIgnoreCase(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
