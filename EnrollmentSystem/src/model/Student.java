@@ -19,6 +19,22 @@ public class Student {
     private String lastSchoolName;
     private String lastSchoolAddress;
 
+    public void displayInfo() {
+        System.out.println("ID              : " + id);
+        System.out.println("Name            : " + lastName + ", " + firstName + " " + middleName);
+        System.out.println("Year & Course   : " + yearLevel + " - " + course);
+        System.out.println("Birthday / Age  : " + birthday + " (" + age + ")");
+        System.out.println("Gender/Religion : " + gender + " / " + religion);
+        System.out.println("Address         : " + homeAddress);
+        System.out.println("Citizenship     : " + citizenship);
+        System.out.println("School Year     : " + schoolYear);
+        System.out.println("Place of Birth  : " + placeOfBirth);
+        System.out.println("Transferee      : " + (transferee ? "Yes" : "No"));
+        if (transferee) {
+            System.out.println("Last School     : " + lastSchoolName + " (" + lastSchoolAddress + ")");
+        }
+    }
+
     public Student() {
     }
 
