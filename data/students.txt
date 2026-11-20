@@ -2,3 +2,4 @@
 25-10438|jean ryza baa|2nd yr|01-20-207|BSCS
 25-10438|baa|jean|suello|2nd yr|01-20-2007|BSIT
 null|null|null|null|null|null|null|19|female|catholic|Hindag-an SBSL
+25-10438|Baa|Jean Ryza|Suello|2nd yr|01-20-2007|BSIT|19|female|catholic|Hindag-an saint bernard so,leyte|filipino|2018-2019|Sogod|false||
