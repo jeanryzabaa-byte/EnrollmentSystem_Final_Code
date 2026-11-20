@@ -159,7 +159,6 @@ public class EnrollmentController {
             return;
         }
 
-        System.out.println("\n--- Updating Student (" + id + ") ---");
         System.out.print("Enter New Last Name: ");
         String lastName = scanner.nextLine().trim();
 
