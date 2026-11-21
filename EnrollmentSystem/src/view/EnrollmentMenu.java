@@ -18,7 +18,7 @@ public class EnrollmentMenu {
         System.out.println("1. Register Student");
         System.out.println("2. Display All Student");
         System.out.println("3. Search Student");
-        System.out.println("4. Delete Student");
+        System.out.println("4. Update Student");
         System.out.println("5. Exit");
         System.out.println("----------------------------------------");
         System.out.print("Enter your choice: ");
