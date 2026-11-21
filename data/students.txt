@@ -3,3 +3,4 @@
 25-10438|baa|jean|suello|2nd yr|01-20-2007|BSIT
 null|null|null|null|null|null|null|19|female|catholic|Hindag-an SBSL
 25-10438|Baa|Jean Ryza|Suello|2nd yr|01-20-2007|BSIT|19|female|catholic|Hindag-an saint bernard so,leyte|filipino|2018-2019|Sogod|false||
+10987|Gula|Jemmy|Chan|1st yr|01-21-2006|BSCS|18|male|Catholic|Himbangan SBSL|filipino|2020-2021|Anhawan|true|SJC|Maasin
