@@ -1,4 +1,4 @@
-package enrollmentsystem.service;
+package service;
 
 import enrollmentsystem.model.enrollment.EnrollmentRecord;
 import enrollmentsystem.model.payment.Payment;
