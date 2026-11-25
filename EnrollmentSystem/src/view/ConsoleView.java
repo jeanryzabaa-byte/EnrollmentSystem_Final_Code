@@ -86,7 +86,9 @@ public class ConsoleView {
             System.out.println("No student records found.");
             return;
         }
-        students.forEach(System.out::println);
+        for (Student s : students) {
+            System.out.println(s);
+        }
     }
 
     public void printSubjects(List<Subject> subjects) {
@@ -94,7 +96,9 @@ public class ConsoleView {
             System.out.println("No subjects found.");
             return;
         }
-        subjects.forEach(System.out::println);
+        for (Subject s : subjects) {
+            System.out.println(s);
+        }
     }
 
     public void printEnrollments(List<EnrollmentRecord> records) {
@@ -102,7 +106,9 @@ public class ConsoleView {
             System.out.println("No enrollment records found.");
             return;
         }
-        records.forEach(System.out::println);
+        for (EnrollmentRecord r : records) {
+            System.out.println(r);
+        }
     }
 
     public void printPayments(List<Payment> payments) {
@@ -110,7 +116,9 @@ public class ConsoleView {
             System.out.println("No payment records found.");
             return;
         }
-        payments.forEach(System.out::println);
+        for (Payment p : payments) {
+            System.out.println(p);
+        }
     }
 
     public void printShiftingRequests(List<ShiftingRequest> requests) {
@@ -118,7 +126,9 @@ public class ConsoleView {
             System.out.println("No shifting requests found.");
             return;
         }
-        requests.forEach(System.out::println);
+        for (ShiftingRequest sr : requests) {
+            System.out.println(sr);
+        }
     }
 
     public void printBillingSummary(Student student, double total, double paid, double balance) {
