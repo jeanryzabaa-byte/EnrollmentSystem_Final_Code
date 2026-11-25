@@ -103,8 +103,9 @@ public class EnrollmentController {
             if (ch.equals("0")) return;
             if (ch.equals("6")) { svc.getStudents().forEach(s -> view.showMessage("  * " + s + " | Bal: " + String.format("%.2f", svc.calculateBalance(s.getStudentNumber())))); continue; }
             if (ch.equals("7")) {
-                view.showMessage("Tuition/Unit: " + String.format("%.2f", svc.getTuitionRateFromFile()) + " | Misc (fees.txt): " + String.format("%.2f", svc.loadMiscFeesFromFile()));
-                svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + " = " + String.format("%.2f", s.getUnits() * s.getFeePerUnit())));
+                view.showMessage("\n--- FEES ---");
+                view.showMessage("  * Registration Fee: 150.00");
+                svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + ": 150.00"));
                 continue;
             }
             if (!ch.matches("[1-5]")) { view.showMessage("Invalid."); continue; }
