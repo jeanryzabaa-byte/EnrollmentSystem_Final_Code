@@ -1,6 +1,7 @@
 package controller;
 
 import model.Student;
+import model.Subject;
 import model.User;
 import service.EnrollmentService;
 import util.InputValidator;
@@ -97,17 +98,19 @@ public class EnrollmentController {
                 }
                 case "3" -> handleAddSubject();
                 case "4" -> {
-                    view.showMessage("\n[Admin Step 4] Subject Catalog");
+                    view.showMessage("\n[Admin Step 4] Subject Catalog (with Instructors)");
                     view.printSubjects(service.getSubjects());
                 }
                 case "5" -> {
-                    view.showMessage("\n[Admin Step 5] Master Student & Synced Portal Records");
-                    view.printStudents(service.getStudents());
+                    view.showMessage("\n[Admin Step 5] Master Enrolled Students & Assigned Instructors");
+                    for (String line : service.getAdminEnrollmentAndInstructorReport()) {
+                        view.showMessage("  * " + line);
+                    }
                     List<String> synced = service.getAdminSyncedRecords();
                     if (!synced.isEmpty()) {
-                        view.showMessage("\n--- Synced Enrollment & Billing Records (Visible in Student Portal) ---");
+                        view.showMessage("\n--- Synced Billing & Portal Summary ---");
                         for (String rec : synced) {
-                            view.showMessage("  * " + rec);
+                            view.showMessage("  - " + rec);
                         }
                     }
                 }
@@ -163,16 +166,9 @@ public class EnrollmentController {
                     view.printStudents(service.getStudents());
                 }
                 case "4" -> {
-                    view.showMessage("\n[Registrar Step 4] Student Enrollments (ENROLLED / NOT ENROLLED)");
+                    view.showMessage("\n[Registrar Step 4] Student Enrollments");
                     String sn = input.readLine("Student No. (press Enter to display ALL): ");
-                    if (!sn.isBlank()) {
-                        Student st = service.findStudent(sn);
-                        if (st != null) {
-                            service.syncStudentToAdminAndPortal(sn);
-                        }
-                    }
-                    List<String> overview = service.getFormattedEnrollmentOverview(sn);
-                    for (String line : overview) {
+                    for (String line : service.getRegistrarEnrollmentSummary(sn)) {
                         view.showMessage("  " + line);
                     }
                 }
@@ -187,13 +183,17 @@ public class EnrollmentController {
         }
     }
 
+    // Sa Registrar: makapili og subject pero dili pa ipakita ang instructor diri (sa Student Portal ra ug Admin)
     private void enrollSubjectsInFlow(String studentNo) {
         String addSubj = input.readLine("Enroll subjects for student " + studentNo + " now? (y/n): ");
         if (!addSubj.equalsIgnoreCase("y")) return;
 
         String sem = input.readNonEmpty("Academic Period / Semester (e.g. 2026-2027 1st): ");
         while (true) {
-            view.printSubjects(service.getSubjects());
+            view.showMessage("--- Available Subjects ---");
+            for (Subject s : service.getSubjects()) {
+                view.showMessage(s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + " units)");
+            }
             String sc = input.readNonEmpty("Enter Subject Code to enroll: ");
             view.showMessage(service.enrollStudent(studentNo, sc, sem));
             String more = input.readLine("Enroll another subject for " + studentNo + "? (y/n): ");
@@ -338,16 +338,16 @@ public class EnrollmentController {
                     }
                 }
                 case "2" -> {
-                    view.showMessage("\n[Student Step 2] My Enrolled Subjects & Grades");
+                    view.showMessage("\n[Student Step 2] My Enrolled Subjects & Instructor");
                     Student current = service.resolveStudentForPortal(user.getLinkedId());
                     String id = current != null ? current.getStudentNumber() : studNo;
-                    var enrolledList = service.getEnrollmentsByStudent(id);
-                    if (enrolledList.isEmpty()) {
-                        String statusTag = current != null ? current.getStatus() : "NOT ENROLLED";
-                        view.showMessage("Status: [" + statusTag + "] - No enrolled subjects yet for Student ID " + id + ".");
+                    List<String> lines = service.getStudentEnrolledSubjectsWithInstructor(id);
+                    if (lines.isEmpty()) {
+                        view.showMessage("Status: [NOT ENROLLED] - No enrolled subjects yet for Student ID " + id + ".");
                     } else {
-                        view.showMessage("Status: [ENROLLED]");
-                        view.printEnrollments(enrolledList);
+                        for (String line : lines) {
+                            view.showMessage("  " + line);
+                        }
                     }
                 }
                 case "3" -> {
