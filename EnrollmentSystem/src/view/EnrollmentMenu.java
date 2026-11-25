@@ -1,30 +1,39 @@
-package view;
+package enrollmentsystem.view;
 
-import java.util.Scanner;
+import enrollmentsystem.model.enrollment.EnrollmentRecord;
+import enrollmentsystem.model.subject.Subject;
+
+import java.util.List;
 
 public class EnrollmentMenu {
-    private final Scanner scanner = new Scanner(System.in);
-
-    public void displayMenu() {
-        System.out.println("\n=== STUDENT ENROLLMENT SYSTEM ===");
+    public void showEnrollmentOptions() {
+        System.out.println("\n--- ENROLLMENT OPTIONS ---");
+        System.out.println("1. Enroll Student in Subject");
+        System.out.println("2. View Enrollments by Student");
+        System.out.println("3. View Roster by Subject");
+        System.out.println("0. Back");
     }
 
-    public int getChoice() {
-        while (true) {
-            String input = scanner.nextLine().trim();
-            try {
-                return Integer.parseInt(input);
-            } catch (NumberFormatException e) {
-                System.out.print("Invalid choice. Enter a number: ");
-            }
+    public void printAvailableSubjects(List<Subject> subjects) {
+        System.out.println("\n--- AVAILABLE SUBJECTS ---");
+        if (subjects.isEmpty()) {
+            System.out.println("No subjects available.");
+            return;
+        }
+        for (Subject s : subjects) {
+            System.out.println("  * " + s);
         }
     }
 
-    public String readLine(String prompt) {
-        if (!prompt.isEmpty()) {
-            System.out.print(prompt);
+    public void printStudentEnrollments(String studentNumber, List<EnrollmentRecord> records) {
+        System.out.println("\n--- ENROLLMENTS FOR STUDENT: " + studentNumber + " ---");
+        if (records.isEmpty()) {
+            System.out.println("No enrollment records found.");
+            return;
         }
-        return scanner.nextLine().trim();
+        for (EnrollmentRecord r : records) {
+            System.out.println("  * " + r);
+        }
     }
 }
         
