@@ -56,7 +56,11 @@ public class EnrollmentService {
             userRepo.saveAll(new ArrayList<>());
         }
         if (subjectRepo.findAll().isEmpty()) {
-            subjectRepo.saveAll(new ArrayList<>());
+            List<Subject> defaultSubjects = new ArrayList<>();
+            defaultSubjects.add(new Subject("IT101", "Introduction to Computing", 3, 150.0, "instructor"));
+            defaultSubjects.add(new Subject("IT201", "Object-Oriented Programming", 3, 150.0, "instructor"));
+            defaultSubjects.add(new Subject("MATH101", "College Algebra", 3, 150.0, "instructor"));
+            subjectRepo.saveAll(defaultSubjects);
         }
         if (studentRepo.findAll().isEmpty()) {
             studentRepo.saveAll(new ArrayList<>());
@@ -249,6 +253,59 @@ public class EnrollmentService {
         return list;
     }
 
+    public List<String> getFormattedEnrollmentOverview(String filterStudentNo) {
+        List<String> output = new ArrayList<>();
+        Set<String> seenLines = new LinkedHashSet<>();
+
+        List<Student> targetStudents = new ArrayList<>();
+        if (filterStudentNo != null && !filterStudentNo.isBlank()) {
+            Student found = findStudent(filterStudentNo.trim());
+            if (found != null) {
+                targetStudents.add(found);
+            }
+        } else {
+            targetStudents.addAll(studentRepo.findAll());
+        }
+
+        for (Student st : targetStudents) {
+            String sn = st.getStudentNumber();
+            List<EnrollmentRecord> recs = getEnrollmentsByStudent(sn);
+            String tag = recs.isEmpty() ? "[NOT ENROLLED]" : "[ENROLLED]";
+            if (recs.isEmpty()) {
+                String line = tag + " " + sn + " - " + st.getFullName() + " (" + st.getCourse() + " Yr " + st.getYearLevel() + ") | No subjects enrolled";
+                if (seenLines.add(line)) output.add(line);
+            } else {
+                for (EnrollmentRecord r : recs) {
+                    String line = tag + " " + sn + " - " + st.getFullName()
+                            + " | Subject: " + r.getSubjectCode()
+                            + " | Period: " + r.getSemester()
+                            + " | Grade: " + r.getGrade();
+                    if (seenLines.add(line)) output.add(line);
+                }
+            }
+        }
+
+        if (output.isEmpty() && filterStudentNo != null && !filterStudentNo.isBlank()) {
+            List<EnrollmentRecord> recs = getEnrollmentsByStudent(filterStudentNo.trim());
+            for (EnrollmentRecord r : recs) {
+                String line = "[ENROLLED] " + r.getStudentNumber()
+                        + " | Subject: " + r.getSubjectCode()
+                        + " | Period: " + r.getSemester()
+                        + " | Grade: " + r.getGrade();
+                if (seenLines.add(line)) output.add(line);
+            }
+            if (output.isEmpty()) {
+                output.add("[NOT ENROLLED] Student No. '" + filterStudentNo.trim() + "' has no enrollment records.");
+            }
+        }
+
+        if (output.isEmpty()) {
+            output.add("[NOT ENROLLED] No student enrollment records found yet.");
+        }
+
+        return output;
+    }
+
     public List<EnrollmentRecord> getEnrollmentsBySubject(String subjectCode) {
         List<EnrollmentRecord> list = new ArrayList<>();
         for (EnrollmentRecord r : enrollmentRepo.findAll()) {
@@ -386,5 +443,3 @@ public class EnrollmentService {
         return false;
     }
 }
-
-

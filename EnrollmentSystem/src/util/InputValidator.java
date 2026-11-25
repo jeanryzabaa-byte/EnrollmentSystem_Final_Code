@@ -49,7 +49,7 @@ public class InputValidator {
                     if (ch == '\r') {
                         continue;
                     }
-                    if (ch == 8 || ch == 127) { // Backspace
+                    if (ch == 8 || ch == 127) {
                         if (sb.length() > 0) {
                             sb.deleteCharAt(sb.length() - 1);
                             System.out.print("\b \b");
