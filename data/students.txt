@@ -1,3 +1,3 @@
-25-10438|Baa|Jean Ryza|Suello|2nd yr|01-20-2007|BSIT|19|female|catholic|Hindag-an saint bernard so,leyte|filipino|2018-2019|Sogod|false||
-456|Yu|Chan|MM|2nd yr|02-20-2007|BSIT|19|female|catholic|Hinunangan|Filipino|2018-2019|sogod|false||
-1234|Baa|Jean|Suello|2nd yr|01-20-2007|BSIT|19|female|catholic|hindag-an|filipino|2018-2019|Sogod District hospital|false||
+25-10438|Baa|Jean Ryza|Suello|2nd yr|01-20-2007|BSIT|19
+456|Yu|Chan|MM|2nd yr|02-20-2007|BSIT|19
+1234|Baa|Jean|Suello|2nd yr|01-20-2007|BSIT|19

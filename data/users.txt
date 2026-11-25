@@ -1,0 +1,5 @@
+admin|admin123|System Administrator|ADMIN|
+registrar|reg123|Registrar User|REGISTRAR|
+cashier|cash123|Cashier User|CASHIER|
+student|stud123|Demo Student|STUDENT|2026-0001
+instructor|inst123|Instructor User|INSTRUCTOR|
