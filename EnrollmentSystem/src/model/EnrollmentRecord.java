@@ -1,53 +1,36 @@
-package model;
+package enrollmentsystem.model.enrollment;
 
 public class EnrollmentRecord {
-    private String enrollmentId;
-    private String studentId;
-    private String subjectCode;
-    private String semester;
-    private String status;
+    private final String recordId;
+    private final String studentNumber;
+    private final String subjectCode;
+    private final String semester;
+    private String status; // ENROLLED, DROPPED, COMPLETED
+    private String grade;  // Pending, 1.0 - 5.0, INC
 
-    public EnrollmentRecord() {
-    }
-
-    public EnrollmentRecord(String enrollmentId, String studentId, String subjectCode, String semester, String status) {
-        this.enrollmentId = enrollmentId;
-        this.studentId = studentId;
+    public EnrollmentRecord(String recordId, String studentNumber, String subjectCode, String semester, String status, String grade) {
+        this.recordId = recordId;
+        this.studentNumber = studentNumber;
         this.subjectCode = subjectCode;
         this.semester = semester;
         this.status = status;
+        this.grade = grade;
     }
 
-    public String getEnrollmentId() {
-        return enrollmentId;
+    public String getRecordId() {
+        return recordId;
     }
 
-    public void setEnrollmentId(String enrollmentId) {
-        this.enrollmentId = enrollmentId;
-    }
-
-    public String getStudentId() {
-        return studentId;
-    }
-
-    public void setStudentId(String studentId) {
-        this.studentId = studentId;
+    public String getStudentNumber() {
+        return studentNumber;
     }
 
     public String getSubjectCode() {
         return subjectCode;
     }
 
-    public void setSubjectCode(String subjectCode) {
-        this.subjectCode = subjectCode;
-    }
-
     public String getSemester() {
         return semester;
-    }
-
-    public void setSemester(String semester) {
-        this.semester = semester;
     }
 
     public String getStatus() {
@@ -56,5 +39,39 @@ public class EnrollmentRecord {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getGrade() {
+        return grade;
+    }
+
+    public void setGrade(String grade) {
+        this.grade = grade;
+    }
+
+    public String toDataString() {
+        return escape(recordId) + "|" + escape(studentNumber) + "|" + escape(subjectCode) + "|"
+                + escape(semester) + "|" + escape(status) + "|" + escape(grade);
+    }
+
+    public static EnrollmentRecord fromDataString(String line) {
+        String[] parts = line.split("\\|", -1);
+        if (parts.length < 6) return null;
+        return new EnrollmentRecord(unescape(parts[0]), unescape(parts[1]), unescape(parts[2]),
+                unescape(parts[3]), unescape(parts[4]), unescape(parts[5]));
+    }
+
+    @Override
+    public String toString() {
+        return String.format("[%s] Student: %s | Subject: %s | Sem: %s | Status: %s | Grade: %s",
+                recordId, studentNumber, subjectCode, semester, status, grade);
+    }
+
+    private static String escape(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("|", "\\p");
+    }
+
+    private static String unescape(String s) {
+        return s == null ? "" : s.replace("\\p", "|").replace("\\\\", "\\");
     }
 }
