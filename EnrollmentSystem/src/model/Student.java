@@ -5,6 +5,7 @@ import java.util.List;
 
 public class Student {
     private String id;
+    private String studentNumber;
     private String fullName;
     private String course;
     private String yearLevel;
@@ -17,6 +18,7 @@ public class Student {
 
     public Student(String id, String fullName, String course, String yearLevel, String enrollmentStatus) {
         this.id = id;
+        this.studentNumber = id;
         this.fullName = fullName;
         this.course = course;
         this.yearLevel = yearLevel;
@@ -31,6 +33,20 @@ public class Student {
 
     public void setId(String id) {
         this.id = id;
+        if (this.studentNumber == null || this.studentNumber.isBlank()) {
+            this.studentNumber = id;
+        }
+    }
+
+    public String getStudentNumber() {
+        if (studentNumber != null && !studentNumber.isBlank()) {
+            return studentNumber;
+        }
+        return id;
+    }
+
+    public void setStudentNumber(String studentNumber) {
+        this.studentNumber = studentNumber;
     }
 
     public String getFullName() {

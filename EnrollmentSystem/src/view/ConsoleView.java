@@ -32,12 +32,13 @@ public class ConsoleView {
 
     public void showRegistrarMenu() {
         System.out.println("\n============== REGISTRAR MODULE ==============");
-        System.out.println("1. Enroll Regular Student (with Subjects)");
-        System.out.println("2. Enroll Transferee Student (with Subjects)");
+        System.out.println("1. Enroll Regular Student");
+        System.out.println("2. Enroll Transferee Student");
         System.out.println("3. View All Students");
-        System.out.println("4. View Student Enrollments");
-        System.out.println("5. Add Subject");
-        System.out.println("6. Shifting Requests (Fill Up / View & Process)");
+        System.out.println("4. Enroll Student in Subject");
+        System.out.println("5. View Student Enrollments");
+        System.out.println("6. Add Subject");
+        System.out.println("7. View & Process Shifting Requests");
         System.out.println("0. Logout");
         System.out.println("==============================================");
     }
@@ -54,7 +55,7 @@ public class ConsoleView {
     }
 
     public void showStudentMenu(String linkedId) {
-        System.out.println("\n=========== STUDENT PORTAL (ID: " + linkedId + ") ===========");
+        System.out.println("\n=========== STUDENT PORTAL (" + linkedId + ") ===========");
         System.out.println("1. My Profile & Registration Info");
         System.out.println("2. My Enrolled Subjects & Grades");
         System.out.println("3. My Assessment Slip & Tuition Balance");
@@ -123,3 +124,5 @@ public class ConsoleView {
         System.out.println("====================================================");
     }
 }
+
+
