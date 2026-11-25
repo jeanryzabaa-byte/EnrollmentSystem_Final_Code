@@ -28,6 +28,7 @@ public class EnrollmentService {
     private final Map<String, Double> labFees = new HashMap<>();
     private final Map<String, Double> miscFees = new HashMap<>();
     private final Map<String, Double> waivedAmounts = new HashMap<>();
+    private final List<String> pendingStudentIdsForAccount = new ArrayList<>();
 
     public EnrollmentService() {
         Path dataDir = resolveDataDir();
@@ -38,6 +39,7 @@ public class EnrollmentService {
         this.paymentRepo = new TextFileRepository<>(dataDir.resolve("payments.txt"), Payment::toDataString, Payment::fromDataString);
         this.shiftingRepo = new TextFileRepository<>(dataDir.resolve("shifting_requests.txt"), ShiftingRequest::toDataString, ShiftingRequest::fromDataString);
         ensureFilesInitialized();
+        refreshPendingStudentIds();
     }
 
     private Path resolveDataDir() {
@@ -57,6 +59,39 @@ public class EnrollmentService {
         }
         if (studentRepo.findAll().isEmpty()) {
             studentRepo.saveAll(new ArrayList<>());
+        }
+    }
+
+    public void refreshPendingStudentIds() {
+        pendingStudentIdsForAccount.clear();
+        Set<String> existingStudentUserIds = new HashSet<>();
+        for (User u : userRepo.findAll()) {
+            if ("STUDENT".equalsIgnoreCase(u.getRole()) && u.getLinkedId() != null) {
+                existingStudentUserIds.add(u.getLinkedId().trim().toUpperCase());
+            }
+        }
+        for (Student s : studentRepo.findAll()) {
+            String sn = s.getStudentNumber().trim();
+            if (!existingStudentUserIds.contains(sn.toUpperCase()) && !pendingStudentIdsForAccount.contains(sn)) {
+                pendingStudentIdsForAccount.add(sn);
+            }
+        }
+    }
+
+    public List<String> getPendingStudentIdsForAccount() {
+        refreshPendingStudentIds();
+        return new ArrayList<>(pendingStudentIdsForAccount);
+    }
+
+    public String generateNextStudentNumber() {
+        int year = LocalDate.now().getYear();
+        int nextSeq = studentRepo.findAll().size() + 1;
+        while (true) {
+            String candidate = String.format("%d-%04d", year, nextSeq);
+            if (findStudent(candidate) == null) {
+                return candidate;
+            }
+            nextSeq++;
         }
     }
 
@@ -82,20 +117,24 @@ public class EnrollmentService {
         }
         users.add(new User(username.trim(), password, normalizedRole, linkedId.trim()));
         userRepo.saveAll(users);
+        refreshPendingStudentIds();
         return true;
     }
 
     public List<User> getUsers() { return userRepo.findAll(); }
 
     public boolean addStudent(String studentNumber, String fullName, String course, int yearLevel) {
-        return addStudentWithType(studentNumber, fullName, course, yearLevel, "REGULAR");
+        return addStudentWithType(studentNumber, fullName, course, yearLevel, "REGULAR") != null;
     }
 
-    public boolean addStudentWithType(String studentNumber, String fullName, String course, int yearLevel, String studentType) {
-        String sn = studentNumber.trim();
+    public String addStudentWithType(String studentNumber, String fullName, String course, int yearLevel, String studentType) {
+        String sn = (studentNumber == null || studentNumber.isBlank() || studentNumber.equalsIgnoreCase("AUTO"))
+                ? generateNextStudentNumber()
+                : studentNumber.trim();
+
         List<Student> students = studentRepo.findAll();
         for (Student s : students) {
-            if (s.getStudentNumber().equalsIgnoreCase(sn)) return false;
+            if (s.getStudentNumber().equalsIgnoreCase(sn)) return null;
         }
         String type = (studentType == null || studentType.isBlank()) ? "REGULAR" : studentType.trim().toUpperCase();
         students.add(new Student(sn, fullName.trim(), course.trim().toUpperCase(), yearLevel, type, "ENROLLED"));
@@ -103,7 +142,8 @@ public class EnrollmentService {
         labFees.putIfAbsent(sn, DEFAULT_LAB_FEE);
         miscFees.putIfAbsent(sn, DEFAULT_MISC_FEE);
         waivedAmounts.putIfAbsent(sn, 0.0);
-        return true;
+        refreshPendingStudentIds();
+        return sn;
     }
 
     public Student findStudent(String studentNumber) {
