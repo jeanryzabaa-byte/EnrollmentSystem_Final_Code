@@ -22,9 +22,13 @@ public class EnrollmentController {
         while (true) {
             view.showMainMenu();
             String choice = input.readLine("Choice: ");
-            if (choice.equals("2")) {
+            if (choice.equals("3")) {
                 view.showMessage("Goodbye!");
                 break;
+            }
+            if (choice.equals("2")) {
+                handleRegisterAccount();
+                continue;
             }
             if (!choice.equals("1")) {
                 view.showMessage("Invalid option.");
@@ -36,13 +40,25 @@ public class EnrollmentController {
             User loggedIn = service.login(username, password);
 
             if (loggedIn == null) {
-                view.showMessage("Invalid username or password.");
+                view.showMessage("Invalid username or password. Choose 2 to register an account first.");
                 continue;
             }
 
             view.showMessage("\nWelcome, " + loggedIn.getUsername() + " [" + loggedIn.getRole() + "]");
             routeByRole(loggedIn);
         }
+    }
+
+    private void handleRegisterAccount() {
+        view.showMessage("\n--- REGISTER ACCOUNT ---");
+        String u = input.readNonEmpty("Set Username: ");
+        String p = input.readNonEmpty("Set Password: ");
+        String r = input.readNonEmpty("Role (ADMIN / REGISTRAR / CASHIER / STUDENT / INSTRUCTOR): ");
+        String lid = input.readNonEmpty("Linked ID (e.g. 2026-0001 or staff ID): ");
+        boolean created = service.addUser(u, p, r, lid);
+        view.showMessage(created
+                ? "Account created! You can now choose 1 to Login."
+                : "Failed: username already exists or invalid role.");
     }
 
     private void routeByRole(User user) {

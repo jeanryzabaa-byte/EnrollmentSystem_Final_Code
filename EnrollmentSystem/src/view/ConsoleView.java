@@ -11,7 +11,8 @@ public class ConsoleView {
 
     public void showMainMenu() {
         System.out.println("\n1. Login");
-        System.out.println("2. Exit");
+        System.out.println("2. Register Account (Set Own Username & Password)");
+        System.out.println("3. Exit");
     }
 
     public void showMessage(String msg) {

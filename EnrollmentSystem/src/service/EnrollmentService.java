@@ -1,6 +1,11 @@
 package service;
 
-import model.*;
+import model.EnrollmentRecord;
+import model.Payment;
+import model.ShiftingRequest;
+import model.Student;
+import model.Subject;
+import model.User;
 import repository.FileRepository;
 import repository.TextFileRepository;
 
@@ -33,7 +38,7 @@ public class EnrollmentService {
         this.enrollmentRepo = new TextFileRepository<>(dataDir.resolve("enrollments.txt"), EnrollmentRecord::toDataString, EnrollmentRecord::fromDataString);
         this.paymentRepo = new TextFileRepository<>(dataDir.resolve("payments.txt"), Payment::toDataString, Payment::fromDataString);
         this.shiftingRepo = new TextFileRepository<>(dataDir.resolve("shifting_requests.txt"), ShiftingRequest::toDataString, ShiftingRequest::fromDataString);
-        seedDefaultDataIfEmpty();
+        ensureFilesInitialized();
     }
 
     private Path resolveDataDir() {
@@ -44,29 +49,15 @@ public class EnrollmentService {
         return current;
     }
 
-    private void seedDefaultDataIfEmpty() {
-        List<User> users = userRepo.findAll();
-        if (users.isEmpty()) {
-            users.add(new User("admin", "admin123", "ADMIN", "ADMIN-01"));
-            users.add(new User("registrar", "reg123", "REGISTRAR", "REG-01"));
-            users.add(new User("cashier", "cash123", "CASHIER", "CASH-01"));
-            users.add(new User("student", "stud123", "STUDENT", "2026-0001"));
-            users.add(new User("instructor", "inst123", "INSTRUCTOR", "INST-01"));
-            userRepo.saveAll(users);
+    private void ensureFilesInitialized() {
+        if (userRepo.findAll().isEmpty()) {
+            userRepo.saveAll(new ArrayList<>());
         }
-
-        List<Subject> subjects = subjectRepo.findAll();
-        if (subjects.isEmpty()) {
-            subjects.add(new Subject("IT101", "Introduction to Computing", 3, 500.0, "instructor"));
-            subjects.add(new Subject("IT201", "Object-Oriented Programming", 3, 600.0, "instructor"));
-            subjects.add(new Subject("MATH101", "College Algebra", 3, 500.0, "instructor"));
-            subjectRepo.saveAll(subjects);
+        if (subjectRepo.findAll().isEmpty()) {
+            subjectRepo.saveAll(new ArrayList<>());
         }
-
-        List<Student> students = studentRepo.findAll();
-        if (students.isEmpty()) {
-            students.add(new Student("2026-0001", "Default Student", "BSIT", 1, "REGULAR", "ENROLLED"));
-            studentRepo.saveAll(students);
+        if (studentRepo.findAll().isEmpty()) {
+            studentRepo.saveAll(new ArrayList<>());
         }
     }
 

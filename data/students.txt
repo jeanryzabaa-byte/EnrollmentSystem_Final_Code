@@ -1,3 +1,1 @@
-25-10438|Baa|Jean Ryza|Suello|2nd yr|01-20-2007|BSIT|19
-456|Yu|Chan|MM|2nd yr|02-20-2007|BSIT|19
-1234|Baa|Jean|Suello|2nd yr|01-20-2007|BSIT|19
+2026-0001|Default Student|BSIT|1|REGULAR|ENROLLED
