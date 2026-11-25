@@ -1,65 +1,68 @@
-public List<EnrollmentRecord> getAllEnrollments() {
-        Map<String, EnrollmentRecord> unique = new LinkedHashMap<>();
-        for (EnrollmentRecord r : enrollmentRepo.findAll()) {
-            unique.put(r.getRecordId(), r);
-        }
-        return new ArrayList<>(unique.values());
+package service;
+
+import java.util.ArrayList;
+import java.util.List;
+import model.Payment;
+import model.ShiftingRequest;
+import model.Student;
+import model.Subject;
+import repository.StudentRepository;
+
+public class EnrollmentService {
+    private final StudentRepository studentRepository;
+    private final List<Student> students = new ArrayList<>();
+    private final List<Subject> subjects = new ArrayList<>();
+    private final List<Payment> payments = new ArrayList<>();
+    private final List<ShiftingRequest> shiftingRequests = new ArrayList<>();
+
+    public EnrollmentService() {
+        this.studentRepository = null;
     }
 
-    public String getStudentEnrollmentStatus(String studentNumber) {
-        List<EnrollmentRecord> list = getEnrollmentsByStudent(studentNumber);
-        return list.isEmpty() ? "NOT ENROLLED" : "ENROLLED";
+    public EnrollmentService(StudentRepository studentRepository) {
+        this.studentRepository = studentRepository;
     }
 
-    public List<String> getFormattedEnrollmentOverview(String filterStudentNo) {
-        List<String> output = new ArrayList<>();
-        Set<String> seenLines = new LinkedHashSet<>();
-
-        List<Student> targetStudents = new ArrayList<>();
-        if (filterStudentNo != null && !filterStudentNo.isBlank()) {
-            Student found = findStudent(filterStudentNo.trim());
-            if (found != null) {
-                targetStudents.add(found);
-            }
-        } else {
-            targetStudents.addAll(studentRepo.findAll());
-        }
-
-        for (Student st : targetStudents) {
-            String sn = st.getStudentNumber();
-            List<EnrollmentRecord> recs = getEnrollmentsByStudent(sn);
-            String tag = recs.isEmpty() ? "[NOT ENROLLED]" : "[ENROLLED]";
-            if (recs.isEmpty()) {
-                String line = tag + " " + sn + " - " + st.getFullName() + " (" + st.getCourse() + " Yr " + st.getYearLevel() + ") | No subjects enrolled";
-                if (seenLines.add(line)) output.add(line);
-            } else {
-                for (EnrollmentRecord r : recs) {
-                    String line = tag + " " + sn + " - " + st.getFullName()
-                            + " | Subject: " + r.getSubjectCode()
-                            + " | Period: " + r.getSemester()
-                            + " | Grade: " + r.getGrade();
-                    if (seenLines.add(line)) output.add(line);
-                }
+    public void addStudent(Student student) {
+        if (student != null) {
+            students.add(student);
+            if (studentRepository != null) {
+                studentRepository.save(student);
             }
         }
-
-        if (output.isEmpty() && filterStudentNo != null && !filterStudentNo.isBlank()) {
-            List<EnrollmentRecord> recs = getEnrollmentsByStudent(filterStudentNo.trim());
-            for (EnrollmentRecord r : recs) {
-                String line = "[ENROLLED] " + r.getStudentNumber()
-                        + " | Subject: " + r.getSubjectCode()
-                        + " | Period: " + r.getSemester()
-                        + " | Grade: " + r.getGrade();
-                if (seenLines.add(line)) output.add(line);
-            }
-            if (output.isEmpty()) {
-                output.add("[NOT ENROLLED] Student No. '" + filterStudentNo.trim() + "' has no enrollment records.");
-            }
-        }
-
-        if (output.isEmpty()) {
-            output.add("[NOT ENROLLED] No student enrollment records found yet.");
-        }
-
-        return output;
     }
+
+    public List<Student> getStudents() {
+        return students;
+    }
+
+    public void addSubject(Subject subject) {
+        if (subject != null) {
+            subjects.add(subject);
+        }
+    }
+
+    public List<Subject> getSubjects() {
+        return subjects;
+    }
+
+    public void addPayment(Payment payment) {
+        if (payment != null) {
+            payments.add(payment);
+        }
+    }
+
+    public List<Payment> getPayments() {
+        return payments;
+    }
+
+    public void addShiftingRequest(ShiftingRequest request) {
+        if (request != null) {
+            shiftingRequests.add(request);
+        }
+    }
+
+    public List<ShiftingRequest> getShiftingRequests() {
+        return shiftingRequests;
+    }
+}
