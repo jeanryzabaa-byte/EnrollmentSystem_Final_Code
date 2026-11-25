@@ -1,4 +1,4 @@
-package enrollmentsystem.model.shifting;
+package model;
 
 public class ShiftingRequest {
     private final String requestId;
