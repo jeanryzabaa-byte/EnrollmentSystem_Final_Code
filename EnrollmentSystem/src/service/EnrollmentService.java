@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 public class EnrollmentService {
-    private static final double DEF_LAB = 750.0, DEF_MISC = 750.0, MAX_OTHER = 750.0;
+    private static final double DEF_LAB = 1000.0, DEF_MISC = 1500.0;
     private static final List<String> INSTS = List.of("Frances Cambaya", "Asma Chistopher", "Danna Remojo");
 
     private final Path dir;
@@ -48,12 +48,12 @@ public class EnrollmentService {
                 String[] p = l.split("\\|");
                 if (p.length < 2) continue;
                 String k = p[0].trim().toUpperCase();
-                double v = Math.max(0.0, Double.parseDouble(p[1].trim()));
+                double v = Double.parseDouble(p[1].trim());
                 if (!sumMisc && k.equals(key)) return v;
-                if (sumMisc && !k.equals("TUITION_PER_UNIT")) { sum += Math.min(MAX_OTHER, v); ok = true; }
+                if (sumMisc && !k.equals("TUITION_PER_UNIT")) { sum += v; ok = true; }
             }
         } catch (Exception ignored) { }
-        return sumMisc ? (ok ? Math.min(MAX_OTHER, sum) : def) : def;
+        return sumMisc ? (ok ? sum : def) : def;
     }
 
     public double loadMiscFeesFromFile() { return readFees("", true, DEF_MISC); }
@@ -66,15 +66,11 @@ public class EnrollmentService {
             try {
                 for (String l : Files.readAllLines(f)) {
                     String[] p = l.split("\\|");
-                    if (p.length < 2) continue;
-                    String k = p[0].trim();
-                    double v = Math.max(0.0, Double.parseDouble(p[1].trim()));
-                    double adj = k.equalsIgnoreCase("TUITION_PER_UNIT") ? v : Math.min(MAX_OTHER, v);
-                    out.add("  * " + k + ": " + String.format("%.2f", adj));
+                    if (p.length >= 2) out.add("  * " + p[0].trim() + ": " + String.format("%.2f", Double.parseDouble(p[1].trim())));
                 }
             } catch (Exception ignored) { }
         }
-        out.add("  * LAB_FEE: " + String.format("%.2f", Math.min(MAX_OTHER, DEF_LAB)));
+        out.add("  * LAB_FEE: " + String.format("%.2f", DEF_LAB));
         getSubjects().forEach(s -> out.add("  * " + s.getCode() + " (" + s.getUnits() + "u): " + String.format("%.2f", s.getUnits() * s.getFeePerUnit())));
         return out;
     }
@@ -241,10 +237,10 @@ public class EnrollmentService {
         return t;
     }
 
-    public void setAdditionalFees(String sn, double l, double m) { lab.put(sn.trim(), Math.min(MAX_OTHER, Math.max(0, l))); misc.put(sn.trim(), Math.min(MAX_OTHER, Math.max(0, m))); syncStudent(sn.trim()); }
+    public void setAdditionalFees(String sn, double l, double m) { lab.put(sn.trim(), Math.max(0, l)); misc.put(sn.trim(), Math.max(0, m)); syncStudent(sn.trim()); }
     public void waiveFee(String sn, double a) { waived.put(sn.trim(), waived.getOrDefault(sn.trim(), 0.0) + Math.max(0, a)); syncStudent(sn.trim()); }
-    public double getLabFee(String sn) { return Math.min(MAX_OTHER, lab.getOrDefault(sn.trim(), DEF_LAB)); }
-    public double getMiscFee(String sn) { return Math.min(MAX_OTHER, misc.getOrDefault(sn.trim(), loadMiscFeesFromFile())); }
+    public double getLabFee(String sn) { return lab.getOrDefault(sn.trim(), DEF_LAB); }
+    public double getMiscFee(String sn) { return misc.getOrDefault(sn.trim(), loadMiscFeesFromFile()); }
     public double getWaivedAmount(String sn) { return waived.getOrDefault(sn.trim(), 0.0); }
     public double calculateTotalPaid(String sn) { return getPaymentsByStudent(sn).stream().mapToDouble(Payment::getAmount).sum(); }
     public double calculateBalance(String sn) { return Math.max(0, Math.max(0, calculateTotalAssessment(sn) + getLabFee(sn) + getMiscFee(sn) - getWaivedAmount(sn)) - calculateTotalPaid(sn)); }
