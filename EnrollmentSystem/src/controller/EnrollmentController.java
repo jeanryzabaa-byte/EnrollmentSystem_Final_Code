@@ -101,7 +101,7 @@ public class EnrollmentController {
                     String prevSchool = input.readNonEmpty("Previous School: ");
                     String course = input.readNonEmpty("Target Course (e.g. BSIT): ");
                     int yr = input.readInt("Credited Year Level (1-5): ", 1, 5);
-                    boolean ok = service.addStudentWithType(sn, name + " (From: " + prevSchool + ")", course, yr, "TRANSFEREE");
+                    boolean ok = service.addStudentWithType(sn, name + " [From: " + prevSchool + "]", course, yr, "TRANSFEREE");
                     view.showMessage(ok ? "Transferee student enrolled." : "Student number already exists.");
                 }
                 case "3" -> view.printStudents(service.getStudents());
@@ -149,15 +149,7 @@ public class EnrollmentController {
                     if (st == null) {
                         view.showMessage("Student not found.");
                     } else {
-                        view.printDetailedBilling(
-                                st,
-                                service.calculateTotalAssessment(sn),
-                                service.getLabFee(sn),
-                                service.getMiscFee(sn),
-                                service.getWaivedAmount(sn),
-                                service.calculateTotalPaid(sn),
-                                service.calculateNetBalance(sn)
-                        );
+                        showBilling(st, sn);
                     }
                 }
                 case "2" -> {
@@ -165,10 +157,10 @@ public class EnrollmentController {
                     if (service.findStudent(sn) == null) {
                         view.showMessage("Student not found.");
                     } else {
-                        double lab = input.readPositiveDouble("New Laboratory Fee: ");
-                        double misc = input.readPositiveDouble("New Miscellaneous Fee: ");
+                        double lab = input.readPositiveDouble("Laboratory Fee: ");
+                        double misc = input.readPositiveDouble("Miscellaneous Fee: ");
                         service.setAdditionalFees(sn, lab, misc);
-                        view.showMessage("Lab Fee and Miscellaneous Fee updated.");
+                        view.showMessage("Lab fee and miscellaneous fee updated.");
                     }
                 }
                 case "3" -> {
@@ -178,13 +170,13 @@ public class EnrollmentController {
                     } else {
                         double waive = input.readPositiveDouble("Amount to Waive: ");
                         service.waiveFee(sn, waive);
-                        view.showMessage("Fee waived successfully.");
+                        view.showMessage("Fee waived.");
                     }
                 }
                 case "4" -> {
                     String sn = input.readNonEmpty("Student Number: ");
-                    double amt = input.readPositiveDouble("Payment Amount: ");
-                    String method = input.readNonEmpty("Payment Method (CASH / GCASH / BANK): ");
+                    double amt = input.readPositiveDouble("Amount: ");
+                    String method = input.readNonEmpty("Payment Method (CASH / GCASH / BANK / CARD): ");
                     view.showMessage(service.recordPayment(sn, amt, method));
                 }
                 case "5" -> {
@@ -219,15 +211,7 @@ public class EnrollmentController {
                     if (st == null) {
                         view.showMessage("No student record found for '" + studNo + "'.");
                     } else {
-                        view.printDetailedBilling(
-                                st,
-                                service.calculateTotalAssessment(studNo),
-                                service.getLabFee(studNo),
-                                service.getMiscFee(studNo),
-                                service.getWaivedAmount(studNo),
-                                service.calculateTotalPaid(studNo),
-                                service.calculateNetBalance(studNo)
-                        );
+                        showBilling(st, studNo);
                     }
                 }
                 case "4" -> {
@@ -280,5 +264,16 @@ public class EnrollmentController {
         view.showMessage(service.addSubject(code, title, units, fee, inst)
                 ? "Subject added."
                 : "Subject code already exists.");
+    }
+
+    private void showBilling(Student st, String sn) {
+        double tuition = service.calculateTotalAssessment(sn);
+        double lab = service.getLabFee(sn);
+        double misc = service.getMiscFee(sn);
+        double waived = service.getWaivedAmount(sn);
+        double totalAssessment = Math.max(0.0, tuition + lab + misc - waived);
+        double paid = service.calculateTotalPaid(sn);
+        double balance = Math.max(0.0, totalAssessment - paid);
+        view.printDetailedBilling(st, tuition, lab, misc, waived, totalAssessment, paid, balance);
     }
 }
