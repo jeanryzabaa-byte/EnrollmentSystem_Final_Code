@@ -49,7 +49,7 @@ public class TextFileRepository<T> implements FileRepository<T> {
         return result;
     }
 
-@Override
+    @Override
     public void saveAll(List<T> items) {
         ensureFileExists();
         List<String> lines = new ArrayList<>();
