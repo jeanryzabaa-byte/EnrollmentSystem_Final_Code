@@ -95,7 +95,8 @@ public class EnrollmentService {
     public void syncStudentToAdminAndPortal(String studentNumber) {
         Student st = findStudent(studentNumber);
         if (st == null) return;
-        st.setStatus("ENROLLED");
+        boolean hasEnrolled = !getEnrollmentsByStudent(st.getStudentNumber()).isEmpty();
+        st.setStatus(hasEnrolled ? "ENROLLED" : "REGISTERED");
         List<Student> all = studentRepo.findAll();
         for (int i = 0; i < all.size(); i++) {
             if (all.get(i).getStudentNumber().equalsIgnoreCase(st.getStudentNumber())) {
@@ -164,7 +165,7 @@ public class EnrollmentService {
             if (s.getStudentNumber().equalsIgnoreCase(sn)) return null;
         }
         String type = (studentType == null || studentType.isBlank()) ? "REGULAR" : studentType.trim().toUpperCase();
-        students.add(new Student(sn, fullName.trim(), course.trim().toUpperCase(), yearLevel, type, "ENROLLED"));
+        students.add(new Student(sn, fullName.trim(), course.trim().toUpperCase(), yearLevel, type, "REGISTERED"));
         studentRepo.saveAll(students);
         labFees.putIfAbsent(sn, DEFAULT_LAB_FEE);
         miscFees.putIfAbsent(sn, DEFAULT_MISC_FEE);
@@ -253,57 +254,91 @@ public class EnrollmentService {
         return list;
     }
 
-    public List<String> getFormattedEnrollmentOverview(String filterStudentNo) {
+    // Para sa ADMIN ra: makita ang tanang naka-enroll ([ENROLLED] / [NOT ENROLLED]) ug ang instructor sa subject
+    public List<String> getAdminEnrollmentAndInstructorReport() {
         List<String> output = new ArrayList<>();
-        Set<String> seenLines = new LinkedHashSet<>();
-
-        List<Student> targetStudents = new ArrayList<>();
-        if (filterStudentNo != null && !filterStudentNo.isBlank()) {
-            Student found = findStudent(filterStudentNo.trim());
-            if (found != null) {
-                targetStudents.add(found);
-            }
-        } else {
-            targetStudents.addAll(studentRepo.findAll());
-        }
-
-        for (Student st : targetStudents) {
+        Set<String> seen = new LinkedHashSet<>();
+        for (Student st : studentRepo.findAll()) {
             String sn = st.getStudentNumber();
             List<EnrollmentRecord> recs = getEnrollmentsByStudent(sn);
-            String tag = recs.isEmpty() ? "[NOT ENROLLED]" : "[ENROLLED]";
             if (recs.isEmpty()) {
-                String line = tag + " " + sn + " - " + st.getFullName() + " (" + st.getCourse() + " Yr " + st.getYearLevel() + ") | No subjects enrolled";
-                if (seenLines.add(line)) output.add(line);
+                String line = "[NOT ENROLLED] " + sn + " - " + st.getFullName()
+                        + " (" + st.getCourse() + " Yr " + st.getYearLevel() + ") | No enrolled subjects";
+                if (seen.add(line)) output.add(line);
             } else {
                 for (EnrollmentRecord r : recs) {
-                    String line = tag + " " + sn + " - " + st.getFullName()
-                            + " | Subject: " + r.getSubjectCode()
+                    Subject subj = findSubject(r.getSubjectCode());
+                    String instName = (subj != null && subj.getInstructor() != null && !subj.getInstructor().isBlank())
+                            ? subj.getInstructor() : "Unassigned";
+                    String subjTitle = subj != null ? subj.getTitle() : r.getSubjectCode();
+                    String line = "[ENROLLED] " + sn + " - " + st.getFullName()
+                            + " | Subject: " + r.getSubjectCode() + " (" + subjTitle + ")"
+                            + " | Instructor: " + instName
                             + " | Period: " + r.getSemester()
                             + " | Grade: " + r.getGrade();
-                    if (seenLines.add(line)) output.add(line);
+                    if (seen.add(line)) output.add(line);
+                }
+            }
+        }
+        if (output.isEmpty()) {
+            output.add("No students or enrollment records found.");
+        }
+        return output;
+    }
+
+    // Para sa REGISTRAR: makita ra ang enrollment status sa student nga walay instructor info
+    public List<String> getRegistrarEnrollmentSummary(String filterStudentNo) {
+        List<String> output = new ArrayList<>();
+        Set<String> seen = new LinkedHashSet<>();
+
+        List<Student> targets = new ArrayList<>();
+        if (filterStudentNo != null && !filterStudentNo.isBlank()) {
+            Student found = findStudent(filterStudentNo.trim());
+            if (found != null) targets.add(found);
+        } else {
+            targets.addAll(studentRepo.findAll());
+        }
+
+        for (Student st : targets) {
+            String sn = st.getStudentNumber();
+            List<EnrollmentRecord> recs = getEnrollmentsByStudent(sn);
+            if (recs.isEmpty()) {
+                String line = "[NOT ENROLLED] " + sn + " - " + st.getFullName()
+                        + " (" + st.getCourse() + " Yr " + st.getYearLevel() + ") | No subjects enrolled";
+                if (seen.add(line)) output.add(line);
+            } else {
+                for (EnrollmentRecord r : recs) {
+                    String line = "[ENROLLED] " + sn + " - " + st.getFullName()
+                            + " | Subject: " + r.getSubjectCode()
+                            + " | Period: " + r.getSemester()
+                            + " | Status: " + r.getStatus();
+                    if (seen.add(line)) output.add(line);
                 }
             }
         }
 
-        if (output.isEmpty() && filterStudentNo != null && !filterStudentNo.isBlank()) {
-            List<EnrollmentRecord> recs = getEnrollmentsByStudent(filterStudentNo.trim());
-            for (EnrollmentRecord r : recs) {
-                String line = "[ENROLLED] " + r.getStudentNumber()
-                        + " | Subject: " + r.getSubjectCode()
-                        + " | Period: " + r.getSemester()
-                        + " | Grade: " + r.getGrade();
-                if (seenLines.add(line)) output.add(line);
-            }
-            if (output.isEmpty()) {
-                output.add("[NOT ENROLLED] Student No. '" + filterStudentNo.trim() + "' has no enrollment records.");
-            }
-        }
-
         if (output.isEmpty()) {
-            output.add("[NOT ENROLLED] No student enrollment records found yet.");
+            output.add("[NOT ENROLLED] No student enrollment records found.");
         }
-
         return output;
+    }
+
+    // Para sa STUDENT PORTAL: makita ang [ENROLLED] subjects ug ang instructor sa matag subject
+    public List<String> getStudentEnrolledSubjectsWithInstructor(String studentNumber) {
+        List<String> lines = new ArrayList<>();
+        List<EnrollmentRecord> recs = getEnrollmentsByStudent(studentNumber);
+        for (EnrollmentRecord r : recs) {
+            Subject subj = findSubject(r.getSubjectCode());
+            String instName = (subj != null && subj.getInstructor() != null && !subj.getInstructor().isBlank())
+                    ? subj.getInstructor() : "Unassigned";
+            String subjTitle = subj != null ? subj.getTitle() : r.getSubjectCode();
+            lines.add("[ENROLLED] " + r.getSubjectCode() + " - " + subjTitle
+                    + " | Instructor: " + instName
+                    + " | Period: " + r.getSemester()
+                    + " | Grade: " + r.getGrade()
+                    + " (" + r.getStatus() + ")");
+        }
+        return lines;
     }
 
     public List<EnrollmentRecord> getEnrollmentsBySubject(String subjectCode) {
