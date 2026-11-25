@@ -50,22 +50,35 @@ public class Student {
         this.birthday = birthDate;
     }
 
-    // Constructor para sa FileStudentRepository / EnrollmentService (9 arguments)
+    // 17-argument constructor para sa FileStudentRepository
     public Student(String id, String lastName, String firstName, String middleName,
-                   String course, String yearLevel, String birthday, int age, String status) {
+                   String yearLevel, String birthday, String course, int age,
+                   String gender, String religion, String homeAddress, String citizenship,
+                   String schoolYear, String placeOfBirth, boolean transferee,
+                   String lastSchoolName, String lastSchoolAddress) {
         this.id = id;
         this.studentNo = id;
         this.lastName = lastName;
         this.firstName = firstName;
         this.middleName = middleName;
         this.name = buildFullName(firstName, middleName, lastName);
-        this.course = course;
         this.yearLevel = yearLevel;
         this.yearSection = yearLevel;
         this.birthday = birthday;
         this.birthDate = birthday;
+        this.course = course;
         this.age = age;
-        this.status = status;
+        this.gender = gender;
+        this.sex = gender;
+        this.religion = religion;
+        this.homeAddress = homeAddress;
+        this.citizenship = citizenship;
+        this.schoolYear = schoolYear;
+        this.placeOfBirth = placeOfBirth;
+        this.transferee = transferee;
+        this.lastSchoolName = lastSchoolName;
+        this.lastSchoolAddress = lastSchoolAddress;
+        this.status = transferee ? "Transferee" : "Regular";
     }
 
     private String buildFullName(String first, String middle, String last) {
@@ -127,31 +140,6 @@ public class Student {
         this.birthDate = birthday;
     }
 
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    public String getStudentNo() {
-        return (studentNo != null) ? studentNo : id;
-    }
-
-    public void setStudentNo(String studentNo) {
-        this.studentNo = studentNo;
-        this.id = studentNo;
-    }
-
-    public String getName() {
-        return (name != null) ? name : buildFullName(firstName, middleName, lastName);
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getCourse() {
         return course;
     }
@@ -160,47 +148,12 @@ public class Student {
         this.course = course;
     }
 
-    public String getMajor() {
-        return major;
+    public int getAge() {
+        return age;
     }
 
-    public void setMajor(String major) {
-        this.major = major;
-    }
-
-    public String getYearSection() {
-        return (yearSection != null) ? yearSection : yearLevel;
-    }
-
-    public void setYearSection(String yearSection) {
-        this.yearSection = yearSection;
-        this.yearLevel = yearSection;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getSex() {
-        return (sex != null) ? sex : gender;
-    }
-
-    public void setSex(String sex) {
-        this.sex = sex;
-        this.gender = sex;
-    }
-
-    public String getBirthDate() {
-        return (birthDate != null) ? birthDate : birthday;
-    }
-
-    public void setBirthDate(String birthDate) {
-        this.birthDate = birthDate;
-        this.birthday = birthDate;
+    public void setAge(int age) {
+        this.age = age;
     }
 
     public String getGender() {
@@ -276,6 +229,66 @@ public class Student {
 
     public void setLastSchoolAddress(String lastSchoolAddress) {
         this.lastSchoolAddress = lastSchoolAddress;
+    }
+
+    public String getStudentNo() {
+        return (studentNo != null) ? studentNo : id;
+    }
+
+    public void setStudentNo(String studentNo) {
+        this.studentNo = studentNo;
+        this.id = studentNo;
+    }
+
+    public String getName() {
+        return (name != null) ? name : buildFullName(firstName, middleName, lastName);
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getMajor() {
+        return major;
+    }
+
+    public void setMajor(String major) {
+        this.major = major;
+    }
+
+    public String getYearSection() {
+        return (yearSection != null) ? yearSection : yearLevel;
+    }
+
+    public void setYearSection(String yearSection) {
+        this.yearSection = yearSection;
+        this.yearLevel = yearSection;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getSex() {
+        return (sex != null) ? sex : gender;
+    }
+
+    public void setSex(String sex) {
+        this.sex = sex;
+        this.gender = sex;
+    }
+
+    public String getBirthDate() {
+        return (birthDate != null) ? birthDate : birthday;
+    }
+
+    public void setBirthDate(String birthDate) {
+        this.birthDate = birthDate;
+        this.birthday = birthDate;
     }
 
     public boolean isRegistrarApproved() {
