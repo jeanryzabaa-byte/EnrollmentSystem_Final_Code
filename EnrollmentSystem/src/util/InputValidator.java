@@ -1,5 +1,7 @@
 package util;
 
+import java.io.Console;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class InputValidator {
@@ -19,6 +21,53 @@ public class InputValidator {
             String val = readLine(prompt);
             if (!val.isEmpty()) return val;
             System.out.println("Input cannot be empty. Please try again.");
+        }
+    }
+
+    public String readPassword(String prompt) {
+        while (true) {
+            Console console = System.console();
+            if (console != null) {
+                char[] pwd = console.readPassword(prompt);
+                if (pwd != null) {
+                    String val = new String(pwd).trim();
+                    java.util.Arrays.fill(pwd, ' ');
+                    if (!val.isEmpty()) return val;
+                }
+                System.out.println("Password cannot be empty. Please try again.");
+                continue;
+            }
+
+            System.out.print(prompt);
+            StringBuilder sb = new StringBuilder();
+            try {
+                while (true) {
+                    int ch = System.in.read();
+                    if (ch == -1 || ch == '\n') {
+                        break;
+                    }
+                    if (ch == '\r') {
+                        continue;
+                    }
+                    if (ch == 8 || ch == 127) { // Backspace
+                        if (sb.length() > 0) {
+                            sb.deleteCharAt(sb.length() - 1);
+                            System.out.print("\b \b");
+                        }
+                    } else {
+                        sb.append((char) ch);
+                        System.out.print("*");
+                    }
+                }
+                System.out.println();
+                String val = sb.toString().trim();
+                if (!val.isEmpty()) return val;
+                System.out.println("Password cannot be empty. Please try again.");
+            } catch (IOException e) {
+                String fallback = scanner.nextLine().trim();
+                if (!fallback.isEmpty()) return fallback;
+                System.out.println("Password cannot be empty. Please try again.");
+            }
         }
     }
 
