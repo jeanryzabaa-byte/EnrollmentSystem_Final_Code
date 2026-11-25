@@ -1,10 +1,6 @@
 package controller;
 
-import model.EnrollmentRecord;
-import model.Payment;
-import model.ShiftingRequest;
 import model.Student;
-import model.Subject;
 import model.User;
 import service.EnrollmentService;
 import util.InputValidator;
@@ -16,7 +12,7 @@ public class EnrollmentController {
     private final InputValidator input;
 
     public EnrollmentController(EnrollmentService service, ConsoleView view, InputValidator input) {
-        this.service = =service;
+        this.service = service;
         this.view = view;
         this.input = input;
     }
