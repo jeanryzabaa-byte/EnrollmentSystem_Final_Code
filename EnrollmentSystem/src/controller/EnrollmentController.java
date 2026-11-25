@@ -171,7 +171,19 @@ public class EnrollmentController {
                     }
                 }
                 case "5" -> handleAddSubject();
-                case "6" -> handleRegistrarShiftingMenu();
+                case "6" -> {
+                    view.showMessage("\n[Registrar Step 6] All Subjects");
+                    List<Subject> subs = service.getSubjects();
+                    if (subs.isEmpty()) {
+                        view.showMessage("No subjects found.");
+                    } else {
+                        for (Subject s : subs) {
+                            view.showMessage("  * " + s.getCode() + " - " + s.getTitle()
+                                    + " (" + s.getUnits() + " units @ " + String.format("%.2f", s.getFeePerUnit()) + "/unit)");
+                        }
+                    }
+                }
+                case "7" -> handleRegistrarShiftingMenu();
                 case "0" -> {
                     view.showMessage("Logging out from Registrar...");
                     return;
@@ -206,7 +218,7 @@ public class EnrollmentController {
     }
 
     private void handleRegistrarShiftingMenu() {
-        view.showMessage("\n[Registrar Step 6] Shifting Requests");
+        view.showMessage("\n[Registrar Step 7] Shifting Requests");
         view.showMessage("1. Fill Up / Submit Shifting Request");
         view.showMessage("2. View & Approve / Reject Shifting Requests");
         String sub = input.readLine("Select action (1 or 2, or Enter to view/process directly): ");

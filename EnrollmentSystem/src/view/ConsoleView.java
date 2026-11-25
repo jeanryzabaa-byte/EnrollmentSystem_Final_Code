@@ -36,7 +36,8 @@ public class ConsoleView {
         System.out.println("3. View All Students");
         System.out.println("4. View Student Enrollments");
         System.out.println("5. Add Subject");
-        System.out.println("6. Shifting Requests (Fill Up / View & Process)");
+        System.out.println("6. View All Subjects");
+        System.out.println("7. Shifting Requests (Fill Up / View & Process)");
         System.out.println("0. Logout");
         System.out.println("==============================================");
     }
