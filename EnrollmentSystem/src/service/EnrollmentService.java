@@ -17,6 +17,11 @@ import java.util.*;
 public class EnrollmentService {
     private static final double DEFAULT_LAB_FEE = 1000.0;
     private static final double DEFAULT_MISC_FEE = 1500.0;
+    private static final List<String> DEFAULT_INSTRUCTORS = List.of(
+            "Frances Cambaya",
+            "Asma Chistopher",
+            "Danna Remojo"
+    );
 
     private final FileRepository<User> userRepo;
     private final FileRepository<Student> studentRepo;
@@ -40,6 +45,7 @@ public class EnrollmentService {
         this.paymentRepo = new TextFileRepository<>(dataDir.resolve("payments.txt"), Payment::toDataString, Payment::fromDataString);
         this.shiftingRepo = new TextFileRepository<>(dataDir.resolve("shifting_requests.txt"), ShiftingRequest::toDataString, ShiftingRequest::fromDataString);
         ensureFilesInitialized();
+        assignDefaultInstructorsToUnassignedSubjects();
         refreshPendingStudentIds();
     }
 
@@ -57,13 +63,34 @@ public class EnrollmentService {
         }
         if (subjectRepo.findAll().isEmpty()) {
             List<Subject> defaultSubjects = new ArrayList<>();
-            defaultSubjects.add(new Subject("IT101", "Introduction to Computing", 3, 150.0, "instructor"));
-            defaultSubjects.add(new Subject("IT201", "Object-Oriented Programming", 3, 150.0, "instructor"));
-            defaultSubjects.add(new Subject("MATH101", "College Algebra", 3, 150.0, "instructor"));
+            defaultSubjects.add(new Subject("CS101", "Introduction to Computing", 3, 500.0, "Frances Cambaya"));
+            defaultSubjects.add(new Subject("MATH101", "College Algebra", 3, 500.0, "Asma Chistopher"));
+            defaultSubjects.add(new Subject("ENG101", "Purposive Communication", 3, 450.0, "Danna Remojo"));
             subjectRepo.saveAll(defaultSubjects);
         }
         if (studentRepo.findAll().isEmpty()) {
             studentRepo.saveAll(new ArrayList<>());
+        }
+    }
+
+    public void assignDefaultInstructorsToUnassignedSubjects() {
+        List<Subject> subjects = subjectRepo.findAll();
+        boolean changed = false;
+        int idx = 0;
+        for (int i = 0; i < subjects.size(); i++) {
+            Subject s = subjects.get(i);
+            String currentInst = s.getInstructor() == null ? "" : s.getInstructor().trim();
+            if (currentInst.isEmpty()
+                    || currentInst.equalsIgnoreCase("Unassigned")
+                    || currentInst.equalsIgnoreCase("instructor")) {
+                String chosen = DEFAULT_INSTRUCTORS.get(idx % DEFAULT_INSTRUCTORS.size());
+                idx++;
+                subjects.set(i, new Subject(s.getCode(), s.getTitle(), s.getUnits(), s.getFeePerUnit(), chosen));
+                changed = true;
+            }
+        }
+        if (changed) {
+            subjectRepo.saveAll(subjects);
         }
     }
 
@@ -212,17 +239,22 @@ public class EnrollmentService {
         for (Subject s : subjects) {
             if (s.getCode().equalsIgnoreCase(subjCode)) return false;
         }
-        String inst = (instructor == null || instructor.isBlank()) ? "Unassigned" : instructor.trim();
+        String inst = (instructor == null || instructor.isBlank())
+                ? DEFAULT_INSTRUCTORS.get(subjects.size() % DEFAULT_INSTRUCTORS.size())
+                : instructor.trim();
         subjects.add(new Subject(subjCode, title.trim(), units, feePerUnit, inst));
         subjectRepo.saveAll(subjects);
         return true;
     }
 
-    public List<Subject> getSubjects() { return subjectRepo.findAll(); }
+    public List<Subject> getSubjects() {
+        assignDefaultInstructorsToUnassignedSubjects();
+        return subjectRepo.findAll();
+    }
 
     public Subject findSubject(String code) {
         if (code == null) return null;
-        for (Subject s : subjectRepo.findAll()) {
+        for (Subject s : getSubjects()) {
             if (s.getCode().equalsIgnoreCase(code.trim())) return s;
         }
         return null;
@@ -230,7 +262,7 @@ public class EnrollmentService {
 
     public List<Subject> getSubjectsForInstructor(String instructorId) {
         List<Subject> list = new ArrayList<>();
-        for (Subject s : subjectRepo.findAll()) {
+        for (Subject s : getSubjects()) {
             if (s.getInstructor().equalsIgnoreCase(instructorId.trim())) list.add(s);
         }
         return list;
@@ -266,6 +298,7 @@ public class EnrollmentService {
     }
 
     public List<String> getAdminEnrollmentAndInstructorReport() {
+        assignDefaultInstructorsToUnassignedSubjects();
         List<String> output = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
         for (Student st : studentRepo.findAll()) {
@@ -279,7 +312,7 @@ public class EnrollmentService {
                 for (EnrollmentRecord r : recs) {
                     Subject subj = findSubject(r.getSubjectCode());
                     String instName = (subj != null && subj.getInstructor() != null && !subj.getInstructor().isBlank())
-                            ? subj.getInstructor() : "Unassigned";
+                            ? subj.getInstructor() : "Frances Cambaya";
                     String subjTitle = subj != null ? subj.getTitle() : r.getSubjectCode();
                     String line = "[ENROLLED] " + sn + " - " + st.getFullName()
                             + " | Subject: " + r.getSubjectCode() + " (" + subjTitle + ")"
@@ -333,12 +366,13 @@ public class EnrollmentService {
     }
 
     public List<String> getStudentEnrolledSubjectsWithInstructor(String studentNumber) {
+        assignDefaultInstructorsToUnassignedSubjects();
         List<String> lines = new ArrayList<>();
         List<EnrollmentRecord> recs = getEnrollmentsByStudent(studentNumber);
         for (EnrollmentRecord r : recs) {
             Subject subj = findSubject(r.getSubjectCode());
             String instName = (subj != null && subj.getInstructor() != null && !subj.getInstructor().isBlank())
-                    ? subj.getInstructor() : "Unassigned";
+                    ? subj.getInstructor() : "Frances Cambaya";
             String subjTitle = subj != null ? subj.getTitle() : r.getSubjectCode();
             lines.add("[ENROLLED] " + r.getSubjectCode() + " - " + subjTitle
                     + " | Instructor: " + instName
@@ -374,7 +408,7 @@ public class EnrollmentService {
     public double calculateTotalAssessment(String studentNumber) {
         double tuition = 0.0;
         Map<String, Subject> subjectMap = new HashMap<>();
-        for (Subject s : subjectRepo.findAll()) {
+        for (Subject s : getSubjects()) {
             subjectMap.put(s.getCode().toUpperCase(), s);
         }
         for (EnrollmentRecord r : getEnrollmentsByStudent(studentNumber)) {
