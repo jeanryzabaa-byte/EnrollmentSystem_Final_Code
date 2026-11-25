@@ -73,23 +73,17 @@ public class EnrollmentController {
             String c = input.readLine("Choice: ");
             switch (c) {
                 case "1" -> {
-                    view.showMessage("\n[Admin Step 1] Register / Provision User Account");
-                    List<String> pendingIds = service.getPendingStudentIdsForAccount();
-                    if (!pendingIds.isEmpty()) {
-                        view.showMessage("Enrolled Student IDs from Registrar ready for account: " + pendingIds);
+                    view.showMessage("\n[Admin Step 1] Add User Account");
+                    String r = input.readNonEmpty("Role (CASHIER / REGISTRAR): ");
+                    if (r.trim().equalsIgnoreCase("STUDENT")) {
+                        view.showMessage("STUDENT role is not allowed in Add User Account.");
+                        break;
                     }
-                    String r = input.readNonEmpty("Role (ADMIN / REGISTRAR / CASHIER / STUDENT / INSTRUCTOR): ");
-                    String lid;
-                    if (r.trim().equalsIgnoreCase("STUDENT") && !pendingIds.isEmpty()) {
-                        String picked = input.readLine("Enter Student ID from list above (or Enter for custom ID): ");
-                        lid = picked.isEmpty() ? input.readNonEmpty("Linked Student ID: ") : picked;
-                    } else {
-                        lid = input.readNonEmpty("Linked ID (Student No. or Staff ID): ");
-                    }
+                    String lid = input.readNonEmpty("Linked ID: ");
                     String u = input.readNonEmpty("Set Username: ");
                     String p = input.readPassword("Set Password: ");
                     view.showMessage(service.addUser(u, p, r, lid)
-                            ? "Account registered and linked to ID '" + lid + "'."
+                            ? "User account added successfully."
                             : "Failed: duplicate username or invalid role.");
                 }
                 case "2" -> {
@@ -188,7 +182,7 @@ public class EnrollmentController {
     }
 
     private void enrollSubjectsInFlow(String studentNo) {
-        String addSubj = input.readLine("Enroll subjects for student " + studentNo + " now? (y/n): ");
+        String addSubj = input.readLine("Enroll subjects now? (y/n): ");
         if (!addSubj.equalsIgnoreCase("y")) return;
 
         String sem = input.readNonEmpty("Academic Period / Semester (e.g. 2026-2027 1st): ");
@@ -199,7 +193,7 @@ public class EnrollmentController {
             }
             String sc = input.readNonEmpty("Enter Subject Code to enroll: ");
             view.showMessage(service.enrollStudent(studentNo, sc, sem));
-            String more = input.readLine("Enroll another subject for " + studentNo + "? (y/n): ");
+            String more = input.readLine("Enroll another subject? (y/n): ");
             if (!more.equalsIgnoreCase("y")) break;
         }
     }
@@ -244,9 +238,6 @@ public class EnrollmentController {
     private void handleCashierForStudent(String preselectedStudentNo) {
         while (true) {
             view.showCashierMenu();
-            if (preselectedStudentNo != null) {
-                view.showMessage("[Active Student from Registrar: " + preselectedStudentNo + "]");
-            }
             String c = input.readLine("Choice: ");
             switch (c) {
                 case "1" -> {
@@ -335,7 +326,7 @@ public class EnrollmentController {
                     view.showMessage("\n[Student Step 1] My Profile & Registration Info");
                     Student current = service.resolveStudentForPortal(user.getLinkedId());
                     if (current == null) {
-                        view.showMessage("No student record found yet. Ask Registrar to enroll first.");
+                        view.showMessage("No student record found yet.");
                     } else {
                         view.showMessage(current.toString());
                     }
