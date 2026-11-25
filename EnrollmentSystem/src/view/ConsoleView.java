@@ -30,9 +30,13 @@ public class ConsoleView {
 
     public void showCashierMenu() {
         System.out.println("\n========== CASHIERING & TUITION MODULE =========");
-        System.out.println("1. View Assessment Slip & Tuition Balance\n2. Set / Update Lab Fee & Miscellaneous Fee");
-        System.out.println("3. Apply Discount / Scholarship / Fee Waiver\n4. Record Tuition Payment");
-        System.out.println("5. View Student Payment History\n0. Logout\n================================================");
+        System.out.println("1. Set / Update Lab Fee & Miscellaneous Fee");
+        System.out.println("2. Apply Discount / Scholarship / Fee Waiver");
+        System.out.println("3. Record Tuition Payment");
+        System.out.println("4. View Assessment Slip & Tuition Balance");
+        System.out.println("5. View Student Payment History");
+        System.out.println("0. Logout");
+        System.out.println("================================================");
     }
 
     public void showStudentMenu(String linkedId) {
@@ -62,7 +66,8 @@ public class ConsoleView {
         items.forEach(System.out::println);
     }
 
-    public void printDetailedBilling(Object student, double tuition, double labFee, double miscFee, double waived, double totalAssessment, double paid, double balance) {
+    public void printDetailedBilling(Object student, double tuition, double labFee, double miscFee,
+                                     double waived, double totalAssessment, double paid, double balance) {
         System.out.println(LINE + "\n              STUDENT ASSESSMENT SLIP\n" + LINE);
         System.out.printf("Student            : %s%nTuition Fee        : %.2f%nLaboratory Fees    : %.2f%nGeneral/Misc Fees  : %.2f%nLess Disc/Waived   : -%.2f%n",
                 student, tuition, labFee, miscFee, waived);
