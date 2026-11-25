@@ -31,24 +31,30 @@ public class FileStudentRepository implements StudentRepository {
                 String[] data = line.split("\\|", -1);
 
                 if (data.length >= 11) {
-                    String id = data[0].trim();
-                    String lastName = data[1].trim();
-                    String firstName = data[2].trim();
-                    String middleName = data[3].trim();
-                    String yearLevel = data[4].trim();
-                    String birthday = data[5].trim();
-                    String course = data[6].trim();
-                    int age = Integer.parseInt(data[7].trim());
-                    String gender = data[8].trim();
-                    String religion = data[9].trim();
-                    String homeAddress = data[10].trim();
+                    String id = cleanField(data[0]);
+                    if (id.isEmpty() || id.equalsIgnoreCase("null")) {
+                        continue;
+                    }
 
-                    String citizenship = data.length > 11 ? data[11].trim() : "Filipino";
-                    String schoolYear = data.length > 12 ? data[12].trim() : "";
-                    String placeOfBirth = data.length > 13 ? data[13].trim() : "";
-                    boolean transferee = data.length > 14 && Boolean.parseBoolean(data[14].trim());
-                    String lastSchoolName = data.length > 15 ? data[15].trim() : "";
-                    String lastSchoolAddress = data.length > 16 ? data[16].trim() : "";
+                    String lastName = cleanField(data[1]);
+                    String firstName = cleanField(data[2]);
+                    String middleName = cleanField(data[3]);
+                    String yearLevel = cleanField(data[4]);
+                    String birthday = cleanField(data[5]);
+                    String course = cleanField(data[6]);
+                    int age = parseIntSafe(data[7]);
+                    String gender = cleanField(data[8]);
+                    String religion = cleanField(data[9]);
+                    String homeAddress = cleanField(data[10]);
+
+                    String citizenship = data.length > 11 && !cleanField(data[11]).isEmpty()
+                            ? cleanField(data[11])
+                            : "Filipino";
+                    String schoolYear = data.length > 12 ? cleanField(data[12]) : "";
+                    String placeOfBirth = data.length > 13 ? cleanField(data[13]) : "";
+                    boolean transferee = data.length > 14 && Boolean.parseBoolean(cleanField(data[14]));
+                    String lastSchoolName = data.length > 15 ? cleanField(data[15]) : "";
+                    String lastSchoolAddress = data.length > 16 ? cleanField(data[16]) : "";
 
                     Student student = new Student(
                         id, lastName, firstName, middleName,
@@ -98,7 +104,7 @@ public class FileStudentRepository implements StudentRepository {
     @Override
     public Student findStudentById(String id) throws IOException {
         for (Student s : getAllStudents()) {
-            if (s.getId().equalsIgnoreCase(id.trim())) {
+            if (s.getId() != null && s.getId().equalsIgnoreCase(id.trim())) {
                 return s;
             }
         }
@@ -109,7 +115,9 @@ public class FileStudentRepository implements StudentRepository {
     public boolean updateStudent(Student updatedStudent) throws IOException {
         ArrayList<Student> students = getAllStudents();
         for (int i = 0; i < students.size(); i++) {
-            if (students.get(i).getId().equalsIgnoreCase(updatedStudent.getId().trim())) {
+            String currentId = students.get(i).getId();
+            if (currentId != null && updatedStudent.getId() != null
+                    && currentId.equalsIgnoreCase(updatedStudent.getId().trim())) {
                 students.set(i, updatedStudent);
                 saveAllStudents(students);
                 return true;
@@ -121,7 +129,7 @@ public class FileStudentRepository implements StudentRepository {
     @Override
     public boolean deleteStudentById(String id) throws IOException {
         ArrayList<Student> students = getAllStudents();
-        boolean removed = students.removeIf(s -> s.getId().equalsIgnoreCase(id.trim()));
+        boolean removed = students.removeIf(s -> s.getId() != null && s.getId().equalsIgnoreCase(id.trim()));
         if (removed) {
             saveAllStudents(students);
         }
@@ -131,32 +139,48 @@ public class FileStudentRepository implements StudentRepository {
     @Override
     public boolean studentExists(String id) throws IOException {
         for (Student s : getAllStudents()) {
-            if (s.getId().equalsIgnoreCase(id)) {
+            if (s.getId() != null && s.getId().equalsIgnoreCase(id.trim())) {
                 return true;
             }
         }
         return false;
     }
 
+    private String cleanField(String value) {
+        if (value == null) {
+            return "";
+        }
+        String trimmed = value.trim();
+        return trimmed.equalsIgnoreCase("null") ? "" : trimmed;
+    }
+
+    private int parseIntSafe(String value) {
+        try {
+            return Integer.parseInt(cleanField(value));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     private String formatStudentRecord(Student student) {
         return String.join("|",
-            student.getId(),
-            student.getLastName(),
-            student.getFirstName(),
-            student.getMiddleName(),
-            student.getYearLevel(),
-            student.getBirthday(),
-            student.getCourse(),
+            cleanField(student.getId()),
+            cleanField(student.getLastName()),
+            cleanField(student.getFirstName()),
+            cleanField(student.getMiddleName()),
+            cleanField(student.getYearLevel()),
+            cleanField(student.getBirthday()),
+            cleanField(student.getCourse()),
             String.valueOf(student.getAge()),
-            student.getGender(),
-            student.getReligion(),
-            student.getHomeAddress(),
-            student.getCitizenship(),
-            student.getSchoolYear(),
-            student.getPlaceOfBirth(),
+            cleanField(student.getGender()),
+            cleanField(student.getReligion()),
+            cleanField(student.getHomeAddress()),
+            cleanField(student.getCitizenship()),
+            cleanField(student.getSchoolYear()),
+            cleanField(student.getPlaceOfBirth()),
             String.valueOf(student.isTransferee()),
-            student.getLastSchoolName(),
-            student.getLastSchoolAddress()
+            cleanField(student.getLastSchoolName()),
+            cleanField(student.getLastSchoolAddress())
         );
     }
 }
