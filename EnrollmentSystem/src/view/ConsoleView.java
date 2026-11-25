@@ -55,7 +55,7 @@ public class ConsoleView {
     }
 
     public void showStudentMenu(String linkedId) {
-        System.out.println("\n=========== STUDENT PORTAL (" + linkedId + ") ===========");
+        System.out.println("\n=========== STUDENT PORTAL (ID: " + linkedId + ") ===========");
         System.out.println("1. My Profile & Registration Info");
         System.out.println("2. My Enrolled Subjects & Grades");
         System.out.println("3. My Assessment Slip & Tuition Balance");
