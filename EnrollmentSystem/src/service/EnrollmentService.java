@@ -23,17 +23,41 @@ public class EnrollmentService {
         this.studentRepository = studentRepository;
     }
 
-    public void addStudent(Student student) {
+    public void registerStudentPending(Student student) {
         if (student != null) {
-            students.add(student);
-            if (studentRepository != null) {
-                studentRepository.save(student);
+            student.setEnrollmentStatus("PENDING");
+            addOrUpdateStudent(student);
+        }
+    }
+
+    public void enrollStudent(Student student, List<Subject> selectedSubjects) {
+        if (student != null) {
+            if (selectedSubjects != null && !selectedSubjects.isEmpty()) {
+                student.setEnrolledSubjects(selectedSubjects);
+                student.setEnrollmentStatus("ENROLLED");
+            } else if (student.getEnrollmentStatus() == null || student.getEnrollmentStatus().isBlank()) {
+                student.setEnrollmentStatus("NOT ENROLLED");
+            }
+            addOrUpdateStudent(student);
+        }
+    }
+
+    private void addOrUpdateStudent(Student student) {
+        for (int i = 0; i < students.size(); i++) {
+            if (students.get(i).getId() != null && students.get(i).getId().equalsIgnoreCase(student.getId())) {
+                students.set(i, student);
+                return;
             }
         }
+        students.add(student);
     }
 
     public List<Student> getStudents() {
         return students;
+    }
+
+    public List<Student> getAllStudentsWithStatus() {
+        return new ArrayList<>(students);
     }
 
     public void addSubject(Subject subject) {
