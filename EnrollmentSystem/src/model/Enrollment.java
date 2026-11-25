@@ -1,5 +1,6 @@
 package model;
 
+
 public abstract class Enrollment {
     private String studentId;
     private String courseCode;

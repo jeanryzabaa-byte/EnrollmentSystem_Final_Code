@@ -1,4 +1,4 @@
-package enrollmentsystem.model.enrollment;
+package model;
 
 public class EnrollmentRecord {
     private final String recordId;

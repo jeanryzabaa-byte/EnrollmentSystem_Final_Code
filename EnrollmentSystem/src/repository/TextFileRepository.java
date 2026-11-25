@@ -1,7 +1,5 @@
 package repository;
 
-public package enrollmentsystem.repository;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -64,6 +62,4 @@ public class TextFileRepository<T> implements FileRepository<T> {
             System.out.println("Error writing " + filePath.getFileName() + ": " + e.getMessage());
         }
     }
-} {
-    
 }
