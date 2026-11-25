@@ -18,6 +18,11 @@ public class User {
     public String getRole() { return role; }
     public String getLinkedId() { return linkedId; }
 
+    @Override
+    public String toString() {
+        return String.format("Username: %s | Role: %s | Linked ID: %s", username, role, linkedId);
+    }
+
     public String toDataString() {
         return escape(username) + "|" + escape(password) + "|" + escape(role) + "|" + escape(linkedId);
     }
@@ -37,5 +42,3 @@ public class User {
         return s == null ? "" : s.replace("\\p", "|").replace("\\\\", "\\");
     }
 }
-
-
