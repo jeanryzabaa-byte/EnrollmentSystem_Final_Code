@@ -1,4 +1,4 @@
-package enrollmentsystem.model.payment;
+package model;
 
 import java.time.LocalDateTime;
 
