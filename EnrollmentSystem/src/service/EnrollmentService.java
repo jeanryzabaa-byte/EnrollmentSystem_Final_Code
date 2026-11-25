@@ -9,7 +9,6 @@ import model.User;
 import repository.FileRepository;
 import repository.TextFileRepository;
 
-import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -61,39 +60,6 @@ public class EnrollmentService {
         }
     }
 
-    private String readSubjectCode(Subject s) {
-        if (s == null) return "";
-        for (String name : List.of("getCode", "getSubjectCode", "getCourseCode")) {
-            try {
-                Method m = s.getClass().getMethod(name);
-                Object val = m.invoke(s);
-                if (val != null) return val.toString();
-            } catch (ReflectiveOperationException ignored) {}
-        }
-        return "";
-    }
-
-    private String readSubjectInstructor(Subject s) {
-        if (s == null) return "";
-        for (String name : List.of("getInstructor", "getInstructorUsername", "getInstructorId")) {
-            try {
-                Method m = s.getClass().getMethod(name);
-                Object val = m.invoke(s);
-                if (val != null) return val.toString();
-            } catch (ReflectiveOperationException ignored) {}
-        }
-        return "";
-    }
-
-    private Payment createPayment(String id, String studentNumber, double amount, String method) {
-        try {
-            return Payment.class.getConstructor(String.class, String.class, double.class, String.class, String.class)
-                    .newInstance(id, studentNumber, amount, method, LocalDate.now().toString());
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Payment constructor mismatch: " + e.getMessage(), e);
-        }
-    }
-
     public User login(String username, String password) {
         if (username == null || password == null) return null;
         for (User u : userRepo.findAll()) {
@@ -107,8 +73,9 @@ public class EnrollmentService {
     public boolean addUser(String username, String password, String role, String linkedId) {
         String normalizedRole = role == null ? "" : role.trim().toUpperCase();
         if (normalizedRole.equals("SYSTEM ADMINISTRATOR")) normalizedRole = "ADMIN";
-        if (!Set.of("ADMIN", "REGISTRAR", "CASHIER", "STUDENT", "INSTRUCTOR").contains(normalizedRole)) return false;
-
+        if (!Set.of("ADMIN", "REGISTRAR", "CASHIER", "STUDENT", "INSTRUCTOR").contains(normalizedRole)) {
+            return false;
+        }
         List<User> users = userRepo.findAll();
         for (User u : users) {
             if (u.getUsername().equalsIgnoreCase(username.trim())) return false;
@@ -153,7 +120,7 @@ public class EnrollmentService {
         String subjCode = code.trim().toUpperCase();
         List<Subject> subjects = subjectRepo.findAll();
         for (Subject s : subjects) {
-            if (readSubjectCode(s).equalsIgnoreCase(subjCode)) return false;
+            if (s.getCode().equalsIgnoreCase(subjCode)) return false;
         }
         String inst = (instructor == null || instructor.isBlank()) ? "Unassigned" : instructor.trim();
         subjects.add(new Subject(subjCode, title.trim(), units, feePerUnit, inst));
@@ -166,7 +133,7 @@ public class EnrollmentService {
     public Subject findSubject(String code) {
         if (code == null) return null;
         for (Subject s : subjectRepo.findAll()) {
-            if (readSubjectCode(s).equalsIgnoreCase(code.trim())) return s;
+            if (s.getCode().equalsIgnoreCase(code.trim())) return s;
         }
         return null;
     }
@@ -174,7 +141,7 @@ public class EnrollmentService {
     public List<Subject> getSubjectsForInstructor(String instructorId) {
         List<Subject> list = new ArrayList<>();
         for (Subject s : subjectRepo.findAll()) {
-            if (readSubjectInstructor(s).equalsIgnoreCase(instructorId.trim())) list.add(s);
+            if (s.getInstructor().equalsIgnoreCase(instructorId.trim())) list.add(s);
         }
         return list;
     }
@@ -232,7 +199,7 @@ public class EnrollmentService {
         double tuition = 0.0;
         Map<String, Subject> subjectMap = new HashMap<>();
         for (Subject s : subjectRepo.findAll()) {
-            subjectMap.put(readSubjectCode(s).toUpperCase(), s);
+            subjectMap.put(s.getCode().toUpperCase(), s);
         }
         for (EnrollmentRecord r : getEnrollmentsByStudent(studentNumber)) {
             Subject s = subjectMap.get(r.getSubjectCode().toUpperCase());
@@ -283,7 +250,7 @@ public class EnrollmentService {
         if (amount <= 0) return "Amount must be greater than zero.";
         List<Payment> payments = paymentRepo.findAll();
         String id = "PAY-" + (payments.size() + 1) + "-" + System.currentTimeMillis() % 10000;
-        payments.add(createPayment(id, sn, amount, method.trim().toUpperCase()));
+        payments.add(new Payment(id, sn, amount, method.trim().toUpperCase(), LocalDate.now().toString()));
         paymentRepo.saveAll(payments);
         return "Payment recorded. Receipt ID: " + id;
     }

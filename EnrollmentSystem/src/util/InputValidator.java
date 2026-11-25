@@ -16,8 +16,8 @@ public class InputValidator {
 
     public String readNonEmpty(String prompt) {
         while (true) {
-            String value = readLine(prompt);
-            if (!value.isEmpty()) return value;
+            String val = readLine(prompt);
+            if (!val.isEmpty()) return val;
             System.out.println("Input cannot be empty. Please try again.");
         }
     }
@@ -26,14 +26,11 @@ public class InputValidator {
         while (true) {
             String raw = readLine(prompt);
             try {
-                int val = Integer.parseInt(raw);
-                if (val < min || val > max) {
-                    System.out.printf("Please enter a number between %d and %d.%n", min, max);
-                    continue;
-                }
-                return val;
+                int num = Integer.parseInt(raw);
+                if (num >= min && num <= max) return num;
+                System.out.println("Please enter a number between " + min + " and " + max + ".");
             } catch (NumberFormatException e) {
-                System.out.println("Invalid whole number. Please try again.");
+                System.out.println("Invalid number. Please try again.");
             }
         }
     }
@@ -43,13 +40,10 @@ public class InputValidator {
             String raw = readLine(prompt);
             try {
                 double val = Double.parseDouble(raw);
-                if (val <= 0) {
-                    System.out.println("Amount must be greater than 0.");
-                    continue;
-                }
-                return val;
+                if (val >= 0) return val;
+                System.out.println("Amount must be 0 or greater.");
             } catch (NumberFormatException e) {
-                System.out.println("Invalid number. Please try again.");
+                System.out.println("Invalid amount. Please enter a valid number.");
             }
         }
     }
