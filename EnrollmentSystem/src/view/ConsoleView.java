@@ -9,8 +9,6 @@ import model.User;
 
 import java.util.List;
 
-import java.util.List;
-
 public class ConsoleView {
     public void showBanner() {
         System.out.println("====================================================");
