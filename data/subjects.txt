@@ -2,3 +2,4 @@ CS101|Introduction to Computing|3|500.0|instructor
 MATH101|College Algebra|3|500.0|instructor
 ENG101|Purposive Communication|3|450.0|
 123|UTS|2|20.0|John Gabo
+205|IT|2|120.0|John
