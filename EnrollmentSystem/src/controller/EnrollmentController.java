@@ -6,6 +6,8 @@ import service.EnrollmentService;
 import util.InputValidator;
 import view.ConsoleView;
 
+import java.util.List;
+
 public class EnrollmentController {
     private final EnrollmentService service;
     private final ConsoleView view;
@@ -70,13 +72,23 @@ public class EnrollmentController {
             String c = input.readLine("Choice: ");
             switch (c) {
                 case "1" -> {
-                    view.showMessage("\n[Admin Step 1] Create System Account");
-                    String u = input.readNonEmpty("New Username: ");
-                    String p = input.readPassword("Password: ");
+                    view.showMessage("\n[Admin Step 1] Register / Provision User Account");
+                    List<String> pendingIds = service.getPendingStudentIdsForAccount();
+                    if (!pendingIds.isEmpty()) {
+                        view.showMessage("Newly Enrolled Student IDs ready for account registration: " + pendingIds);
+                    }
                     String r = input.readNonEmpty("Role (ADMIN / REGISTRAR / CASHIER / STUDENT / INSTRUCTOR): ");
-                    String lid = input.readNonEmpty("Linked ID: ");
+                    String lid;
+                    if (r.trim().equalsIgnoreCase("STUDENT") && !pendingIds.isEmpty()) {
+                        String picked = input.readLine("Enter Student ID from list above (or Enter for custom ID): ");
+                        lid = picked.isEmpty() ? input.readNonEmpty("Linked Student ID: ") : picked;
+                    } else {
+                        lid = input.readNonEmpty("Linked ID (Student No. or Staff ID): ");
+                    }
+                    String u = input.readNonEmpty("Set Username: ");
+                    String p = input.readPassword("Set Password: ");
                     view.showMessage(service.addUser(u, p, r, lid)
-                            ? "User account created successfully."
+                            ? "Account registered and linked to ID '" + lid + "'."
                             : "Failed: duplicate username or invalid role.");
                 }
                 case "2" -> {
@@ -108,23 +120,28 @@ public class EnrollmentController {
             switch (c) {
                 case "1" -> {
                     view.showMessage("\n[Registrar Step 1] Enroll Regular Student");
-                    String sn = input.readNonEmpty("Student No. (e.g. 25-10453): ");
+                    String snInput = input.readLine("Student No. (or press Enter to auto-generate): ");
                     String name = input.readNonEmpty("Full Name: ");
                     String course = input.readNonEmpty("Course (e.g. BSIT): ");
                     int yr = input.readInt("Year Level (1-5): ", 1, 5);
-                    view.showMessage(service.addStudentWithType(sn, name, course, yr, "REGULAR")
-                            ? "Regular student registered."
+                    String assignedId = service.addStudentWithType(snInput, name, course, yr, "REGULAR");
+                    view.showMessage(assignedId != null
+                            ? "Regular student enrolled! Generated/Assigned Student ID: " + assignedId
+                              + " (Ready for Admin account registration)."
                             : "Student number already exists.");
                 }
                 case "2" -> {
                     view.showMessage("\n[Registrar Step 2] Enroll Transferee Student");
-                    String sn = input.readNonEmpty("Transferee Student No.: ");
+                    String snInput = input.readLine("Transferee Student No. (or press Enter to auto-generate): ");
                     String name = input.readNonEmpty("Full Name: ");
                     String prevSchool = input.readNonEmpty("Previous School: ");
                     String course = input.readNonEmpty("Target Course (e.g. BSIT): ");
                     int yr = input.readInt("Credited Year Level (1-5): ", 1, 5);
-                    boolean ok = service.addStudentWithType(sn, name + " [From: " + prevSchool + "]", course, yr, "TRANSFEREE");
-                    view.showMessage(ok ? "Transferee student registered." : "Student number already exists.");
+                    String assignedId = service.addStudentWithType(snInput, name + " [From: " + prevSchool + "]", course, yr, "TRANSFEREE");
+                    view.showMessage(assignedId != null
+                            ? "Transferee student enrolled! Generated/Assigned Student ID: " + assignedId
+                              + " (Ready for Admin account registration)."
+                            : "Student number already exists.");
                 }
                 case "3" -> {
                     view.showMessage("\n[Registrar Step 3] Registered Students");
@@ -234,7 +251,7 @@ public class EnrollmentController {
                 case "1" -> {
                     view.showMessage("\n[Student Step 1] My Profile & Registration Info");
                     Student st = service.findStudent(studNo);
-                    if (st == null) view.showMessage("No student record found for '" + studNo + "'. Ask Registrar to register it first.");
+                    if (st == null) view.showMessage("No student record found for '" + studNo + "'. Ask Registrar to enroll it first.");
                     else view.showMessage(st.toString());
                 }
                 case "2" -> {
