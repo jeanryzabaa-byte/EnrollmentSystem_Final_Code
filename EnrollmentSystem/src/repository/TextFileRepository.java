@@ -27,7 +27,7 @@ public class TextFileRepository<T> implements FileRepository<T> {
                 Files.createFile(filePath);
             }
         } catch (IOException e) {
-            System.out.println("Error initializing data file " + filePath.getFileName() + ": " + e.getMessage());
+            System.out.println("Error initializing data file: " + e.getMessage());
         }
     }
 
@@ -39,12 +39,10 @@ public class TextFileRepository<T> implements FileRepository<T> {
             for (String line : Files.readAllLines(filePath, StandardCharsets.UTF_8)) {
                 if (line == null || line.trim().isEmpty()) continue;
                 T item = deserializer.apply(line);
-                if (item != null) {
-                    result.add(item);
-                }
+                if (item != null) result.add(item);
             }
         } catch (IOException e) {
-            System.out.println("Error reading " + filePath.getFileName() + ": " + e.getMessage());
+            System.out.println("Error reading file: " + e.getMessage());
         }
         return result;
     }
@@ -59,7 +57,7 @@ public class TextFileRepository<T> implements FileRepository<T> {
         try {
             Files.write(filePath, lines, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
-            System.out.println("Error writing " + filePath.getFileName() + ": " + e.getMessage());
+            System.out.println("Error writing file: " + e.getMessage());
         }
     }
 }
