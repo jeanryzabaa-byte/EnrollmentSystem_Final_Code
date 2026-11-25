@@ -1,4 +1,4 @@
-package enrollmentsystem.repository;
+package repository;
 
 import java.util.List;
 
