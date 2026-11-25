@@ -1,0 +1,3 @@
+CS101|Introduction to Computing|3|500.0|instructor
+MATH101|College Algebra|3|500.0|instructor
+ENG101|Purposive Communication|3|450.0|
