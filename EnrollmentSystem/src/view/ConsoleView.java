@@ -35,6 +35,7 @@ public class ConsoleView {
         System.out.println("3. Record Tuition Payment");
         System.out.println("4. View Assessment Slip & Tuition Balance");
         System.out.println("5. View Student Payment History");
+        System.out.println("6. View Students Record");
         System.out.println("0. Logout");
         System.out.println("================================================");
     }
