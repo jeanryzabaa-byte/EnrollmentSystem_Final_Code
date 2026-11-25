@@ -81,7 +81,6 @@ public class EnrollmentController {
         }
     }
 
-    // ================= ADMIN FLOW =================
     private void handleAdmin() {
         while (true) {
             view.showAdminMenu();
@@ -119,7 +118,6 @@ public class EnrollmentController {
         }
     }
 
-    // ================= REGISTRAR FLOW =================
     private void handleRegistrar() {
         while (true) {
             view.showRegistrarMenu();
@@ -161,9 +159,7 @@ public class EnrollmentController {
                     view.showMessage("\n[Registrar Step 5] Student Official Registration / Enrolled Subjects");
                     String sn = input.readNonEmpty("Student No.: ");
                     Student st = service.findStudent(sn);
-                    if (st != null) {
-                        view.showMessage("Student: " + st);
-                    }
+                    if (st != null) view.showMessage("Student: " + st);
                     view.printEnrollments(service.getEnrollmentsByStudent(sn));
                 }
                 case "6" -> handleAddSubject();
@@ -190,7 +186,6 @@ public class EnrollmentController {
         }
     }
 
-    // ================= CASHIERING & TUITION FLOW =================
     private void handleCashier() {
         while (true) {
             view.showCashierMenu();
@@ -200,11 +195,8 @@ public class EnrollmentController {
                     view.showMessage("\n[Cashier Step 1] Student Assessment Slip & Tuition Balance");
                     String sn = input.readNonEmpty("Student No.: ");
                     Student st = service.findStudent(sn);
-                    if (st == null) {
-                        view.showMessage("Student not found.");
-                    } else {
-                        showBilling(st, sn);
-                    }
+                    if (st == null) view.showMessage("Student not found.");
+                    else showBilling(st, sn);
                 }
                 case "2" -> {
                     view.showMessage("\n[Cashier Step 2] Set / Update Laboratory & General/Miscellaneous Fees");
@@ -250,7 +242,6 @@ public class EnrollmentController {
         }
     }
 
-    // ================= STUDENT FLOW =================
     private void handleStudent(User user) {
         String studNo = user.getLinkedId();
         while (true) {
@@ -259,20 +250,14 @@ public class EnrollmentController {
             switch (c) {
                 case "1" -> {
                     Student st = service.findStudent(studNo);
-                    if (st == null) {
-                        view.showMessage("No student record found for '" + studNo + "'. Ask Registrar to register it first.");
-                    } else {
-                        view.showMessage(st.toString());
-                    }
+                    if (st == null) view.showMessage("No student record found for '" + studNo + "'. Ask Registrar to register it first.");
+                    else view.showMessage(st.toString());
                 }
                 case "2" -> view.printEnrollments(service.getEnrollmentsByStudent(studNo));
                 case "3" -> {
                     Student st = service.findStudent(studNo);
-                    if (st == null) {
-                        view.showMessage("No student record found for '" + studNo + "'.");
-                    } else {
-                        showBilling(st, studNo);
-                    }
+                    if (st == null) view.showMessage("No student record found for '" + studNo + "'.");
+                    else showBilling(st, studNo);
                 }
                 case "4" -> {
                     String target = input.readNonEmpty("Target Course (e.g. BSCS): ");
@@ -289,7 +274,6 @@ public class EnrollmentController {
         }
     }
 
-    // ================= INSTRUCTOR FLOW =================
     private void handleInstructor(User user) {
         String instId = user.getLinkedId();
         while (true) {
