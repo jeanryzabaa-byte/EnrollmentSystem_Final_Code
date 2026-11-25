@@ -29,6 +29,7 @@ public class EnrollmentService {
     private final Map<String, Double> miscFees = new HashMap<>();
     private final Map<String, Double> waivedAmounts = new HashMap<>();
     private final List<String> pendingStudentIdsForAccount = new ArrayList<>();
+    private final List<String> adminSyncedRecords = new ArrayList<>();
 
     public EnrollmentService() {
         Path dataDir = resolveDataDir();
@@ -55,7 +56,11 @@ public class EnrollmentService {
             userRepo.saveAll(new ArrayList<>());
         }
         if (subjectRepo.findAll().isEmpty()) {
-            subjectRepo.saveAll(new ArrayList<>());
+            List<Subject> defaultSubjects = new ArrayList<>();
+            defaultSubjects.add(new Subject("IT101", "Introduction to Computing", 3, 150.0, "instructor"));
+            defaultSubjects.add(new Subject("IT201", "Object-Oriented Programming", 3, 150.0, "instructor"));
+            defaultSubjects.add(new Subject("MATH101", "College Algebra", 3, 150.0, "instructor"));
+            subjectRepo.saveAll(defaultSubjects);
         }
         if (studentRepo.findAll().isEmpty()) {
             studentRepo.saveAll(new ArrayList<>());
@@ -81,6 +86,28 @@ public class EnrollmentService {
     public List<String> getPendingStudentIdsForAccount() {
         refreshPendingStudentIds();
         return new ArrayList<>(pendingStudentIdsForAccount);
+    }
+
+    public List<String> getAdminSyncedRecords() {
+        return new ArrayList<>(adminSyncedRecords);
+    }
+
+    public void syncStudentToAdminAndPortal(String studentNumber) {
+        Student st = findStudent(studentNumber);
+        if (st == null) return;
+        st.setStatus("ENROLLED");
+        List<Student> all = studentRepo.findAll();
+        for (int i = 0; i < all.size(); i++) {
+            if (all.get(i).getStudentNumber().equalsIgnoreCase(st.getStudentNumber())) {
+                all.set(i, st);
+                break;
+            }
+        }
+        studentRepo.saveAll(all);
+
+        String summary = st.toString() + " | Balance: " + String.format("%.2f", calculateBalance(st.getStudentNumber()));
+        adminSyncedRecords.removeIf(r -> r.startsWith("[" + st.getStudentNumber() + "]"));
+        adminSyncedRecords.add(summary);
     }
 
     public String generateNextStudentNumber() {
@@ -143,6 +170,7 @@ public class EnrollmentService {
         miscFees.putIfAbsent(sn, DEFAULT_MISC_FEE);
         waivedAmounts.putIfAbsent(sn, 0.0);
         refreshPendingStudentIds();
+        syncStudentToAdminAndPortal(sn);
         return sn;
     }
 
@@ -150,6 +178,16 @@ public class EnrollmentService {
         if (studentNumber == null) return null;
         for (Student s : studentRepo.findAll()) {
             if (s.getStudentNumber().equalsIgnoreCase(studentNumber.trim())) return s;
+        }
+        return null;
+    }
+
+    public Student resolveStudentForPortal(String linkedId) {
+        Student direct = findStudent(linkedId);
+        if (direct != null) return direct;
+        List<Student> all = studentRepo.findAll();
+        if (!all.isEmpty()) {
+            return all.get(all.size() - 1);
         }
         return null;
     }
@@ -203,6 +241,7 @@ public class EnrollmentService {
         String id = "ENR-" + (records.size() + 1) + "-" + System.currentTimeMillis() % 10000;
         records.add(new EnrollmentRecord(id, sn, sc, semester.trim(), "ENROLLED", "N/A"));
         enrollmentRepo.saveAll(records);
+        syncStudentToAdminAndPortal(sn);
         return "Enrollment successful. Record ID: " + id;
     }
 
@@ -229,6 +268,7 @@ public class EnrollmentService {
                 r.setGrade(grade.trim().toUpperCase());
                 r.setStatus("GRADED");
                 enrollmentRepo.saveAll(records);
+                syncStudentToAdminAndPortal(r.getStudentNumber());
                 return true;
             }
         }
@@ -252,12 +292,14 @@ public class EnrollmentService {
         String sn = studentNumber.trim();
         labFees.put(sn, Math.max(0.0, labFee));
         miscFees.put(sn, Math.max(0.0, miscFee));
+        syncStudentToAdminAndPortal(sn);
     }
 
     public void waiveFee(String studentNumber, double amount) {
         String sn = studentNumber.trim();
         double current = waivedAmounts.getOrDefault(sn, 0.0);
         waivedAmounts.put(sn, current + Math.max(0.0, amount));
+        syncStudentToAdminAndPortal(sn);
     }
 
     public double getLabFee(String studentNumber) {
@@ -292,7 +334,8 @@ public class EnrollmentService {
         String id = "PAY-" + (payments.size() + 1) + "-" + System.currentTimeMillis() % 10000;
         payments.add(new Payment(id, sn, amount, method.trim().toUpperCase(), LocalDate.now().toString()));
         paymentRepo.saveAll(payments);
-        return "Payment recorded. Receipt ID: " + id;
+        syncStudentToAdminAndPortal(sn);
+        return "Payment recorded. Receipt ID: " + id + " | Record synced to Admin & Student Portal.";
     }
 
     public List<Payment> getPaymentsByStudent(String studentNumber) {
@@ -336,6 +379,7 @@ public class EnrollmentService {
                         if (s.getStudentNumber().equalsIgnoreCase(sr.getStudentNumber())) {
                             s.setCourse(sr.getTargetCourse());
                             studentRepo.saveAll(students);
+                            syncStudentToAdminAndPortal(s.getStudentNumber());
                             break;
                         }
                     }
