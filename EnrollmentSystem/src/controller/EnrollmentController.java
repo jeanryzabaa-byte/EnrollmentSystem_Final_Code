@@ -33,6 +33,8 @@ public class EnrollmentController {
         }
     }
 
+    private boolean isYes(String s) { return s != null && (s.trim().equalsIgnoreCase("y") || s.trim().equalsIgnoreCase("yes")); }
+
     private void admin() {
         while (true) {
             view.showAdminMenu();
@@ -73,15 +75,15 @@ public class EnrollmentController {
                 in.readNonEmpty("Course: "), in.readInt("Year (1-5): ", 1, 5), type);
         if (id == null) { view.showMessage("Exists."); return; }
         view.showMessage("Enrolled ID: " + id);
-        if (in.readLine("Enroll subjects? (y/n): ").equalsIgnoreCase("y")) {
+        if (isYes(in.readLine("Enroll subjects? (y/n): "))) {
             String sem = in.readNonEmpty("Semester: ");
             do {
                 svc.getSubjects().forEach(s -> view.showMessage("  " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u)"));
                 view.showMessage(svc.enrollStudent(id, in.readNonEmpty("Subject Code: "), sem));
-            } while (in.readLine("Another? (y/n): ").equalsIgnoreCase("y"));
+            } while (isYes(in.readLine("Another? (y/n): ")));
         }
         svc.syncStudent(id);
-        if (in.readLine("Go to Cashier? (y/n): ").equalsIgnoreCase("y")) cashier(id);
+        if (isYes(in.readLine("Go to Cashier? (y/n): "))) cashier(id);
     }
 
     private void shifting() {
@@ -93,7 +95,7 @@ public class EnrollmentController {
         if (reqs.isEmpty()) { view.showMessage("None."); return; }
         reqs.forEach(r -> view.showMessage(r + " | OKAY / NADAWAT NA"));
         String id = in.readLine("Request ID (Enter=skip): ");
-        if (!id.isEmpty()) view.showMessage(svc.processShiftingRequest(id, in.readLine("Approve? (y/n): ").equalsIgnoreCase("y")) ? "Updated." : "Not found.");
+        if (!id.isEmpty()) view.showMessage(svc.processShiftingRequest(id, isYes(in.readLine("Approve? (y/n): "))) ? "Updated." : "Not found.");
     }
 
     private void cashier(String pre) {
@@ -103,9 +105,13 @@ public class EnrollmentController {
             if (ch.equals("0")) return;
             if (ch.equals("6")) { svc.getStudents().forEach(s -> view.showMessage("  * " + s + " | Bal: " + String.format("%.2f", svc.calculateBalance(s.getStudentNumber())))); continue; }
             if (ch.equals("7")) {
+                String sn = (pre != null && !pre.isBlank() && in.readLine("Student No. [Enter=" + pre + "]: ").isEmpty()) ? pre : in.readNonEmpty("Student No.: ");
                 view.showMessage("\n--- FEES ---");
                 view.showMessage("  * Registration Fee: 150.00");
                 svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + ": 150.00"));
+                view.showMessage("  * Lab: " + String.format("%.2f", svc.getLabFee(sn)));
+                view.showMessage("  * Misc: " + String.format("%.2f", svc.getMiscFee(sn)));
+                view.showMessage("  * Waive: " + String.format("%.2f", svc.getWaivedAmount(sn)));
                 continue;
             }
             if (!ch.matches("[1-5]")) { view.showMessage("Invalid."); continue; }
@@ -113,7 +119,7 @@ public class EnrollmentController {
             Student st = svc.findStudent(sn);
             if (st == null) { view.showMessage("Not found."); continue; }
             switch (ch) {
-                case "1" -> { svc.setAdditionalFees(sn, in.readPositiveDouble("Lab: "), in.readPositiveDouble("Misc: ")); if (in.readLine("Waive? (y/n): ").equalsIgnoreCase("y")) svc.waiveFee(sn, in.readPositiveDouble("Waive: ")); billing(svc.findStudent(sn), sn); }
+                case "1" -> { svc.setAdditionalFees(sn, in.readPositiveDouble("Lab: "), in.readPositiveDouble("Misc: ")); if (isYes(in.readLine("Waive? (y/n): "))) svc.waiveFee(sn, in.readPositiveDouble("Waive: ")); billing(svc.findStudent(sn), sn); }
                 case "2" -> { svc.waiveFee(sn, in.readPositiveDouble("Waive: ")); billing(svc.findStudent(sn), sn); }
                 case "3" -> { billing(st, sn); view.showMessage(svc.recordPayment(sn, in.readPositiveDouble("Amount: "), in.readNonEmpty("Method: "))); billing(st, sn); }
                 case "4" -> billing(st, sn);
