@@ -1,10 +1,10 @@
-package enrollmentsystem.controller;
+package controller;
 
-import enrollmentsystem.model.student.Student;
-import enrollmentsystem.model.user.User;
-import enrollmentsystem.service.EnrollmentService;
-import enrollmentsystem.util.InputValidator;
-import enrollmentsystem.view.ConsoleView;
+import model.student.Student;
+import model.user.User;
+import service.EnrollmentService;
+import util.InputValidator;
+import view.ConsoleView;
 
 public class EnrollmentController {
     private final EnrollmentService service;
