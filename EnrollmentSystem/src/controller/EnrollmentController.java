@@ -227,7 +227,7 @@ public class EnrollmentController {
             String target = input.readNonEmpty("Target Course (e.g. BSCS): ");
             String reason = input.readNonEmpty("Reason for shifting: ");
             String res = service.submitShiftingRequest(sn, target, reason);
-            view.showMessage("Shifting request status: OKAY / NADAWAT NA. " + res);
+            view.showMessage("Shifting request status: OKAY / Done. " + res);
             return;
         }
         var reqs = service.getShiftingRequests();
@@ -235,7 +235,7 @@ public class EnrollmentController {
             view.showMessage("No shifting requests found.");
         } else {
             for (var req : reqs) {
-                view.showMessage(req.toString() + " | OKAY / NADAWAT NA");
+                view.showMessage(req.toString() + " | OKAY / Done");
             }
             String reqId = input.readLine("Enter Request ID to process (or Enter to skip): ");
             if (!reqId.isEmpty()) {
@@ -372,7 +372,7 @@ public class EnrollmentController {
                     String target = input.readNonEmpty("Target Course (e.g. BSCS): ");
                     String reason = input.readNonEmpty("Reason for shifting: ");
                     String result = service.submitShiftingRequest(id, target, reason);
-                    view.showMessage("Shifting request status: OKAY / NADAWAT NA. " + result);
+                    view.showMessage("Shifting request status: OKAY / Done " + result);
                 }
                 case "5" -> {
                     view.showMessage("\n[Student Step 5] My Shifting Requests");
@@ -383,7 +383,7 @@ public class EnrollmentController {
                         view.showMessage("No shifting requests found.");
                     } else {
                         for (var req : myReqs) {
-                            view.showMessage(req.toString() + " | OKAY / NADAWAT NA");
+                            view.showMessage(req.toString() + " | OKAY / Done");
                         }
                     }
                 }
