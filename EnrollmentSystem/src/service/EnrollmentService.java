@@ -151,6 +151,17 @@ public class EnrollmentService {
 
     public List<User> getUsers() { return userRepo.findAll(); }
 
+    public List<User> getAddedUsersOnly() {
+        Set<String> defaultUsernames = Set.of("admin", "registrar", "cashier", "student", "instructor");
+        List<User> added = new ArrayList<>();
+        for (User u : userRepo.findAll()) {
+            if (!defaultUsernames.contains(u.getUsername().toLowerCase())) {
+                added.add(u);
+            }
+        }
+        return added.isEmpty() ? userRepo.findAll() : added;
+    }
+
     public boolean addStudent(String studentNumber, String fullName, String course, int yearLevel) {
         return addStudentWithType(studentNumber, fullName, course, yearLevel, "REGULAR") != null;
     }
@@ -254,7 +265,6 @@ public class EnrollmentService {
         return list;
     }
 
-    // Para sa ADMIN ra: makita ang tanang naka-enroll ([ENROLLED] / [NOT ENROLLED]) ug ang instructor sa subject
     public List<String> getAdminEnrollmentAndInstructorReport() {
         List<String> output = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
@@ -286,7 +296,6 @@ public class EnrollmentService {
         return output;
     }
 
-    // Para sa REGISTRAR: makita ra ang enrollment status sa student nga walay instructor info
     public List<String> getRegistrarEnrollmentSummary(String filterStudentNo) {
         List<String> output = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
@@ -323,7 +332,6 @@ public class EnrollmentService {
         return output;
     }
 
-    // Para sa STUDENT PORTAL: makita ang [ENROLLED] subjects ug ang instructor sa matag subject
     public List<String> getStudentEnrolledSubjectsWithInstructor(String studentNumber) {
         List<String> lines = new ArrayList<>();
         List<EnrollmentRecord> recs = getEnrollmentsByStudent(studentNumber);

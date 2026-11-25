@@ -93,16 +93,20 @@ public class EnrollmentController {
                             : "Failed: duplicate username or invalid role.");
                 }
                 case "2" -> {
-                    view.showMessage("\n[Admin Step 2] System User Accounts");
-                    view.printUsers(service.getUsers());
+                    view.showMessage("\n[Admin Step 2] Added User Accounts");
+                    view.printUsers(service.getAddedUsersOnly());
                 }
-                case "3" -> handleAddSubject();
+                case "3" -> {
+                    view.showMessage("\n[Admin Step 3] Subjects & Assigned Instructors");
+                    for (Subject s : service.getSubjects()) {
+                        String inst = (s.getInstructor() == null || s.getInstructor().isBlank())
+                                ? "Unassigned" : s.getInstructor();
+                        view.showMessage("  * " + s.getCode() + " - " + s.getTitle()
+                                + " (" + s.getUnits() + " units) | Instructor: " + inst);
+                    }
+                }
                 case "4" -> {
-                    view.showMessage("\n[Admin Step 4] Subject Catalog (with Instructors)");
-                    view.printSubjects(service.getSubjects());
-                }
-                case "5" -> {
-                    view.showMessage("\n[Admin Step 5] Master Enrolled Students & Assigned Instructors");
+                    view.showMessage("\n[Admin Step 4] Master Enrolled Students & Assigned Instructors");
                     for (String line : service.getAdminEnrollmentAndInstructorReport()) {
                         view.showMessage("  * " + line);
                     }
@@ -183,7 +187,6 @@ public class EnrollmentController {
         }
     }
 
-    // Sa Registrar: makapili og subject pero dili pa ipakita ang instructor diri (sa Student Portal ra ug Admin)
     private void enrollSubjectsInFlow(String studentNo) {
         String addSubj = input.readLine("Enroll subjects for student " + studentNo + " now? (y/n): ");
         if (!addSubj.equalsIgnoreCase("y")) return;

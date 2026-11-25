@@ -22,10 +22,9 @@ public class ConsoleView {
     public void showAdminMenu() {
         System.out.println("\n================ ADMIN MODULE ================");
         System.out.println("1. Add User Account");
-        System.out.println("2. View All Users");
-        System.out.println("3. Add Subject");
-        System.out.println("4. View All Subjects");
-        System.out.println("5. View All Students");
+        System.out.println("2. View Added Users");
+        System.out.println("3. View Subjects & Assigned Instructors");
+        System.out.println("4. View Enrolled Students & Instructors");
         System.out.println("0. Logout");
         System.out.println("==============================================");
     }
