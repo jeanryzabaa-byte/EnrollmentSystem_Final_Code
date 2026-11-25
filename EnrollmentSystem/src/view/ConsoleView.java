@@ -1,11 +1,13 @@
 package view;
 
-import enrollmentsystem.model.enrollment.EnrollmentRecord;
-import enrollmentsystem.model.payment.Payment;
-import enrollmentsystem.model.shifting.ShiftingRequest;
-import enrollmentsystem.model.student.Student;
-import enrollmentsystem.model.subject.Subject;
-import enrollmentsystem.model.user.User;
+import model.EnrollmentRecord;
+import model.Payment;
+import model.ShiftingRequest;
+import model.Student;
+import model.Subject;
+import model.User;
+
+import java.util.List;
 
 import java.util.List;
 
