@@ -1,13 +1,13 @@
 package service;
 
-import enrollmentsystem.model.enrollment.EnrollmentRecord;
-import enrollmentsystem.model.payment.Payment;
-import enrollmentsystem.model.shifting.ShiftingRequest;
-import enrollmentsystem.model.student.Student;
-import enrollmentsystem.model.subject.Subject;
-import enrollmentsystem.model.user.User;
-import enrollmentsystem.repository.FileRepository;
-import enrollmentsystem.repository.TextFileRepository;
+import model.EnrollmentRecord;
+import model.Payment;
+import model.ShiftingRequest;
+import model.Student;
+import model.Subject;
+import model.User;
+import repository.FileRepository;
+import repository.TextFileRepository;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

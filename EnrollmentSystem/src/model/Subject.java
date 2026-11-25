@@ -1,4 +1,4 @@
-package enrollmentsystem.model.subject;
+package model;
 
 public class Subject {
     private final String subjectCode;
