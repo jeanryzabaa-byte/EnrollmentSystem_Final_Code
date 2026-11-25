@@ -1,105 +1,73 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Student {
-    private String id;
-    private String studentNumber;
-    private String fullName;
+    private final String studentNumber;
+    private final String fullName;
     private String course;
-    private String yearLevel;
-    private String enrollmentStatus;
-    private List<Subject> enrolledSubjects = new ArrayList<>();
+    private int yearLevel;
+    private String studentType;
+    private String status;
 
-    public Student() {
-        this.enrollmentStatus = "NOT ENROLLED";
+    public Student(String studentNumber, String fullName, String course, int yearLevel, String status) {
+        this(studentNumber, fullName, course, yearLevel, "REGULAR", status);
     }
 
-    public Student(String id, String fullName, String course, String yearLevel, String enrollmentStatus) {
-        this.id = id;
-        this.studentNumber = id;
-        this.fullName = fullName;
-        this.course = course;
-        this.yearLevel = yearLevel;
-        this.enrollmentStatus = (enrollmentStatus == null || enrollmentStatus.isBlank())
-                ? "NOT ENROLLED"
-                : enrollmentStatus.toUpperCase();
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-        if (this.studentNumber == null || this.studentNumber.isBlank()) {
-            this.studentNumber = id;
-        }
-    }
-
-    public String getStudentNumber() {
-        if (studentNumber != null && !studentNumber.isBlank()) {
-            return studentNumber;
-        }
-        return id;
-    }
-
-    public void setStudentNumber(String studentNumber) {
+    public Student(String studentNumber, String fullName, String course, int yearLevel, String studentType, String status) {
         this.studentNumber = studentNumber;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
         this.fullName = fullName;
-    }
-
-    public String getCourse() {
-        return course;
-    }
-
-    public void setCourse(String course) {
         this.course = course;
-    }
-
-    public String getYearLevel() {
-        return yearLevel;
-    }
-
-    public void setYearLevel(String yearLevel) {
         this.yearLevel = yearLevel;
+        this.studentType = (studentType == null || studentType.isBlank()) ? "REGULAR" : studentType.trim().toUpperCase();
+        this.status = (status == null || status.isBlank()) ? "ENROLLED" : status.trim().toUpperCase();
     }
 
-    public List<Subject> getEnrolledSubjects() {
-        return enrolledSubjects;
+    public String getStudentNumber() { return studentNumber; }
+    public String getFullName() { return fullName; }
+    public String getCourse() { return course; }
+    public void setCourse(String course) { this.course = course; }
+    public int getYearLevel() { return yearLevel; }
+    public void setYearLevel(int yearLevel) { this.yearLevel = yearLevel; }
+    public String getStudentType() { return studentType; }
+    public void setStudentType(String studentType) { this.studentType = studentType; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String toDataString() {
+        return escape(studentNumber) + "|" + escape(fullName) + "|" + escape(course) + "|"
+                + yearLevel + "|" + escape(studentType) + "|" + escape(status);
     }
 
-    public void setEnrolledSubjects(List<Subject> enrolledSubjects) {
-        this.enrolledSubjects = (enrolledSubjects != null) ? enrolledSubjects : new ArrayList<>();
-    }
-
-    public void addSubject(Subject subject) {
-        if (subject != null) {
-            this.enrolledSubjects.add(subject);
+    public static Student fromDataString(String line) {
+        if (line == null || line.isBlank()) return null;
+        String[] parts = line.split("\\|", -1);
+        try {
+            if (parts.length == 5) {
+                return new Student(unescape(parts[0]), unescape(parts[1]), unescape(parts[2]),
+                        Integer.parseInt(parts[3].trim()), "REGULAR", unescape(parts[4]));
+            }
+            if (parts.length >= 6) {
+                return new Student(unescape(parts[0]), unescape(parts[1]), unescape(parts[2]),
+                        Integer.parseInt(parts[3].trim()), unescape(parts[4]), unescape(parts[5]));
+            }
+        } catch (NumberFormatException ignored) {
+            return null;
         }
+        return null;
     }
 
-    public String getEnrollmentStatus() {
-        if (enrollmentStatus != null && !enrollmentStatus.isBlank()) {
-            return enrollmentStatus.toUpperCase();
-        }
-        if (enrolledSubjects != null && !enrolledSubjects.isEmpty()) {
-            return "ENROLLED";
-        }
-        return "NOT ENROLLED";
+    @Override
+    public String toString() {
+        return String.format("[%s] %s | %s - Year %d (%s) | Status: %s",
+                studentNumber, fullName, course, yearLevel, studentType, status);
     }
 
-    public void setEnrollmentStatus(String enrollmentStatus) {
-        this.enrollmentStatus = (enrollmentStatus == null || enrollmentStatus.isBlank())
-                ? "NOT ENROLLED"
-                : enrollmentStatus.toUpperCase();
+    private static String escape(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("|", "\\p");
+    }
+
+    private static String unescape(String s) {
+        return s == null ? "" : s.replace("\\p", "|").replace("\\\\", "\\");
     }
 }
+
+
