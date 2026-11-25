@@ -8,448 +8,347 @@ import java.time.LocalDate;
 import java.util.*;
 
 public class EnrollmentService {
-    private static final double DEFAULT_LAB_FEE = 1000.0;
-    private static final double DEFAULT_MISC_FEE = 1500.0;
-    private static final List<String> DEFAULT_INSTRUCTORS = List.of(
-            "Frances Cambaya", "Asma Chistopher", "Danna Remojo"
-    );
+    private static final double DEF_LAB = 1000.0, DEF_MISC = 1500.0;
+    private static final List<String> INSTRUCTORS = List.of("Frances Cambaya", "Asma Chistopher", "Danna Remojo");
 
     private final Path dataDir;
     private final FileRepository<User> userRepo;
     private final FileRepository<Student> studentRepo;
     private final FileRepository<Subject> subjectRepo;
-    private final FileRepository<EnrollmentRecord> enrollmentRepo;
-    private final FileRepository<Payment> paymentRepo;
-    private final FileRepository<ShiftingRequest> shiftingRepo;
+    private final FileRepository<EnrollmentRecord> enrollRepo;
+    private final FileRepository<Payment> payRepo;
+    private final FileRepository<ShiftingRequest> shiftRepo;
 
-    private final Map<String, Double> labFees = new HashMap<>();
-    private final Map<String, Double> miscFees = new HashMap<>();
-    private final Map<String, Double> waivedAmounts = new HashMap<>();
-    private final List<String> pendingStudentIdsForAccount = new ArrayList<>();
-    private final List<String> adminSyncedRecords = new ArrayList<>();
+    private final Map<String, Double> labFees = new HashMap<>(), miscFees = new HashMap<>(), waived = new HashMap<>();
+    private final List<String> synced = new ArrayList<>();
 
     public EnrollmentService() {
-        this.dataDir = Files.exists(Paths.get("data")) ? Paths.get("data") : Paths.get("EnrollmentSystem", "data");
-        this.userRepo = new TextFileRepository<>(dataDir.resolve("users.txt"), User::toDataString, User::fromDataString);
-        this.studentRepo = new TextFileRepository<>(dataDir.resolve("students.txt"), Student::toDataString, Student::fromDataString);
-        this.subjectRepo = new TextFileRepository<>(dataDir.resolve("subjects.txt"), Subject::toDataString, Subject::fromDataString);
-        this.enrollmentRepo = new TextFileRepository<>(dataDir.resolve("enrollments.txt"), EnrollmentRecord::toDataString, EnrollmentRecord::fromDataString);
-        this.paymentRepo = new TextFileRepository<>(dataDir.resolve("payments.txt"), Payment::toDataString, Payment::fromDataString);
-        this.shiftingRepo = new TextFileRepository<>(dataDir.resolve("shifting_requests.txt"), ShiftingRequest::toDataString, ShiftingRequest::fromDataString);
+        dataDir = Files.exists(Paths.get("data")) ? Paths.get("data") : Paths.get("EnrollmentSystem", "data");
+        userRepo = new TextFileRepository<>(dataDir.resolve("users.txt"), User::toDataString, User::fromDataString);
+        studentRepo = new TextFileRepository<>(dataDir.resolve("students.txt"), Student::toDataString, Student::fromDataString);
+        subjectRepo = new TextFileRepository<>(dataDir.resolve("subjects.txt"), Subject::toDataString, Subject::fromDataString);
+        enrollRepo = new TextFileRepository<>(dataDir.resolve("enrollments.txt"), EnrollmentRecord::toDataString, EnrollmentRecord::fromDataString);
+        payRepo = new TextFileRepository<>(dataDir.resolve("payments.txt"), Payment::toDataString, Payment::fromDataString);
+        shiftRepo = new TextFileRepository<>(dataDir.resolve("shifting_requests.txt"), ShiftingRequest::toDataString, ShiftingRequest::fromDataString);
 
         if (userRepo.findAll().isEmpty()) userRepo.saveAll(new ArrayList<>());
         if (studentRepo.findAll().isEmpty()) studentRepo.saveAll(new ArrayList<>());
         if (subjectRepo.findAll().isEmpty()) {
             subjectRepo.saveAll(List.of(
-                    new Subject("CS101", "Introduction to Computing", 3, 500.0, "Frances Cambaya"),
-                    new Subject("MATH101", "College Algebra", 3, 500.0, "Asma Chistopher"),
-                    new Subject("ENG101", "Purposive Communication", 3, 450.0, "Danna Remojo")
+                    new Subject("CS101", "Introduction to Computing", 3, 150.0, "Frances Cambaya"),
+                    new Subject("MATH101", "College Algebra", 3, 150.0, "Asma Chistopher"),
+                    new Subject("ENG101", "Purposive Communication", 3, 150.0, "Danna Remojo")
             ));
         }
-        assignDefaultInstructorsToUnassignedSubjects();
-        refreshPendingStudentIds();
+        assignDefaultInstructors();
     }
 
-    private double readFeeFromFile(String targetKey, boolean sumNonTuition, double fallback) {
-        Path feesFile = dataDir.resolve("fees.txt");
-        if (!Files.exists(feesFile)) return fallback;
-        double total = 0.0;
+    private double readFeesFile(String keyTarget, boolean sumMisc, double fallback) {
+        Path f = dataDir.resolve("fees.txt");
+        if (!Files.exists(f)) return fallback;
+        double sum = 0.0;
         boolean found = false;
         try {
-            for (String line : Files.readAllLines(feesFile)) {
+            for (String line : Files.readAllLines(f)) {
                 if (line == null || line.isBlank()) continue;
                 String[] p = line.split("\\|");
                 if (p.length < 2) continue;
-                String key = p[0].trim().toUpperCase();
-                double val = Double.parseDouble(p[1].trim());
-                if (!sumNonTuition && key.equals(targetKey)) return val;
-                if (sumNonTuition && !key.equals("TUITION_PER_UNIT")) {
-                    total += val;
-                    found = true;
-                }
+                String k = p[0].trim().toUpperCase();
+                double v = Double.parseDouble(p[1].trim());
+                if (!sumMisc && k.equals(keyTarget)) return v;
+                if (sumMisc && !k.equals("TUITION_PER_UNIT")) { sum += v; found = true; }
             }
         } catch (Exception ignored) { }
-        return sumNonTuition ? (found ? total : fallback) : fallback;
+        return sumMisc ? (found ? sum : fallback) : fallback;
     }
 
-    public double loadMiscFeesFromFile() { return readFeeFromFile("", true, DEFAULT_MISC_FEE); }
-    public double getTuitionRateFromFile() { return readFeeFromFile("TUITION_PER_UNIT", false, 150.0); }
+    public double loadMiscFeesFromFile() { return readFeesFile("", true, DEF_MISC); }
+    public double getTuitionRateFromFile() { return readFeesFile("TUITION_PER_UNIT", false, 150.0); }
 
-    private String resolveInstructor(Subject subj, int fallbackIndex) {
-        if (subj != null && subj.getInstructor() != null) {
-            String inst = subj.getInstructor().trim();
-            if (!inst.isEmpty() && !inst.equalsIgnoreCase("Unassigned") && !inst.equalsIgnoreCase("instructor")) {
-                return inst;
-            }
+    private String pickInstructor(Subject s, int idx) {
+        if (s != null && s.getInstructor() != null) {
+            String cur = s.getInstructor().trim();
+            if (!cur.isEmpty() && !cur.equalsIgnoreCase("Unassigned") && !cur.equalsIgnoreCase("instructor")) return cur;
         }
-        return DEFAULT_INSTRUCTORS.get(Math.abs(fallbackIndex) % DEFAULT_INSTRUCTORS.size());
+        return INSTRUCTORS.get(Math.abs(idx) % INSTRUCTORS.size());
     }
 
-    public void assignDefaultInstructorsToUnassignedSubjects() {
-        List<Subject> subjects = subjectRepo.findAll();
+    public void assignDefaultInstructors() {
+        List<Subject> subs = subjectRepo.findAll();
         boolean changed = false;
-        for (int i = 0; i < subjects.size(); i++) {
-            Subject s = subjects.get(i);
+        for (int i = 0; i < subs.size(); i++) {
+            Subject s = subs.get(i);
             String cur = s.getInstructor() == null ? "" : s.getInstructor().trim();
             if (cur.isEmpty() || cur.equalsIgnoreCase("Unassigned") || cur.equalsIgnoreCase("instructor")) {
-                subjects.set(i, new Subject(s.getCode(), s.getTitle(), s.getUnits(), s.getFeePerUnit(), resolveInstructor(null, i)));
+                subs.set(i, new Subject(s.getCode(), s.getTitle(), s.getUnits(), s.getFeePerUnit(), pickInstructor(null, i)));
                 changed = true;
             }
         }
-        if (changed) subjectRepo.saveAll(subjects);
+        if (changed) subjectRepo.saveAll(subs);
     }
 
-    public void refreshPendingStudentIds() {
-        pendingStudentIdsForAccount.clear();
-        Set<String> existing = new HashSet<>();
-        for (User u : userRepo.findAll()) {
-            if ("STUDENT".equalsIgnoreCase(u.getRole()) && u.getLinkedId() != null) {
-                existing.add(u.getLinkedId().trim().toUpperCase());
-            }
-        }
-        for (Student s : studentRepo.findAll()) {
-            String sn = s.getStudentNumber().trim();
-            if (!existing.contains(sn.toUpperCase()) && !pendingStudentIdsForAccount.contains(sn)) {
-                pendingStudentIdsForAccount.add(sn);
-            }
-        }
-    }
+    public List<String> getAdminSyncedRecords() { return new ArrayList<>(synced); }
 
-    public List<String> getPendingStudentIdsForAccount() {
-        refreshPendingStudentIds();
-        return new ArrayList<>(pendingStudentIdsForAccount);
-    }
-
-    public List<String> getAdminSyncedRecords() { return new ArrayList<>(adminSyncedRecords); }
-
-    public void syncStudentToAdminAndPortal(String studentNumber) {
-        Student st = findStudent(studentNumber);
+    public void syncStudent(String sn) {
+        Student st = findStudent(sn);
         if (st == null) return;
         st.setStatus(getEnrollmentsByStudent(st.getStudentNumber()).isEmpty() ? "REGISTERED" : "ENROLLED");
         List<Student> all = studentRepo.findAll();
         for (int i = 0; i < all.size(); i++) {
-            if (all.get(i).getStudentNumber().equalsIgnoreCase(st.getStudentNumber())) {
-                all.set(i, st);
-                break;
-            }
+            if (all.get(i).getStudentNumber().equalsIgnoreCase(st.getStudentNumber())) { all.set(i, st); break; }
         }
         studentRepo.saveAll(all);
-        String summary = st + " | Balance: " + String.format("%.2f", calculateBalance(st.getStudentNumber()));
-        adminSyncedRecords.removeIf(r -> r.startsWith("[" + st.getStudentNumber() + "]"));
-        adminSyncedRecords.add(summary);
+        String line = st + " | Balance: " + String.format("%.2f", calculateBalance(st.getStudentNumber()));
+        synced.removeIf(r -> r.startsWith("[" + st.getStudentNumber() + "]"));
+        synced.add(line);
     }
 
-    public String generateNextStudentNumber() {
-        int year = LocalDate.now().getYear();
-        int seq = studentRepo.findAll().size() + 1;
-        while (findStudent(String.format("%d-%04d", year, seq)) != null) seq++;
-        return String.format("%d-%04d", year, seq);
+    public String nextStudentNo() {
+        int yr = LocalDate.now().getYear(), seq = studentRepo.findAll().size() + 1;
+        while (findStudent(String.format("%d-%04d", yr, seq)) != null) seq++;
+        return String.format("%d-%04d", yr, seq);
     }
 
-    public User login(String username, String password) {
-        if (username == null || password == null) return null;
-        for (User u : userRepo.findAll()) {
-            if (u.getUsername().equalsIgnoreCase(username.trim()) && u.getPassword().equals(password)) return u;
+    public User login(String u, String p) {
+        if (u == null || p == null) return null;
+        for (User x : userRepo.findAll()) {
+            if (x.getUsername().equalsIgnoreCase(u.trim()) && x.getPassword().equals(p)) return x;
         }
         return null;
     }
 
-    public boolean addUser(String username, String password, String role, String linkedId) {
-        String norm = role == null ? "" : role.trim().toUpperCase();
-        if (norm.equals("SYSTEM ADMINISTRATOR")) norm = "ADMIN";
-        if (!Set.of("ADMIN", "REGISTRAR", "CASHIER", "STUDENT", "INSTRUCTOR").contains(norm)) return false;
-        for (User u : userRepo.findAll()) {
-            if (u.getUsername().equalsIgnoreCase(username.trim())) return false;
-        }
-        List<User> users = userRepo.findAll();
-        users.add(new User(username.trim(), password, norm, linkedId.trim()));
-        userRepo.saveAll(users);
-        refreshPendingStudentIds();
+    public boolean addUser(String u, String p, String role, String lid) {
+        String r = role == null ? "" : role.trim().toUpperCase();
+        if (r.equals("SYSTEM ADMINISTRATOR")) r = "ADMIN";
+        if (!Set.of("ADMIN", "REGISTRAR", "CASHIER", "STUDENT", "INSTRUCTOR").contains(r)) return false;
+        for (User x : userRepo.findAll()) if (x.getUsername().equalsIgnoreCase(u.trim())) return false;
+        List<User> list = userRepo.findAll();
+        list.add(new User(u.trim(), p, r, lid.trim()));
+        userRepo.saveAll(list);
         return true;
     }
 
-    public List<User> getUsers() { return userRepo.findAll(); }
-
     public List<User> getAddedUsersOnly() {
-        Set<String> defaults = Set.of("admin", "registrar", "cashier", "student", "instructor");
-        List<User> added = new ArrayList<>();
-        for (User u : userRepo.findAll()) {
-            if (!defaults.contains(u.getUsername().toLowerCase())) added.add(u);
-        }
-        return added.isEmpty() ? userRepo.findAll() : added;
+        Set<String> def = Set.of("admin", "registrar", "cashier", "student", "instructor");
+        List<User> out = new ArrayList<>();
+        for (User u : userRepo.findAll()) if (!def.contains(u.getUsername().toLowerCase())) out.add(u);
+        return out.isEmpty() ? userRepo.findAll() : out;
     }
 
-    public String addStudentWithType(String studentNumber, String fullName, String course, int yearLevel, String studentType) {
-        String sn = (studentNumber == null || studentNumber.isBlank() || studentNumber.equalsIgnoreCase("AUTO"))
-                ? generateNextStudentNumber() : studentNumber.trim();
+    public String addStudentWithType(String snIn, String name, String course, int yr, String type) {
+        String sn = (snIn == null || snIn.isBlank() || snIn.equalsIgnoreCase("AUTO")) ? nextStudentNo() : snIn.trim();
         if (findStudent(sn) != null) return null;
-        String type = (studentType == null || studentType.isBlank()) ? "REGULAR" : studentType.trim().toUpperCase();
-        List<Student> students = studentRepo.findAll();
-        students.add(new Student(sn, fullName.trim(), course.trim().toUpperCase(), yearLevel, type, "REGISTERED"));
-        studentRepo.saveAll(students);
-        labFees.putIfAbsent(sn, DEFAULT_LAB_FEE);
+        List<Student> list = studentRepo.findAll();
+        list.add(new Student(sn, name.trim(), course.trim().toUpperCase(), yr,
+                (type == null || type.isBlank()) ? "REGULAR" : type.trim().toUpperCase(), "REGISTERED"));
+        studentRepo.saveAll(list);
+        labFees.putIfAbsent(sn, DEF_LAB);
         miscFees.putIfAbsent(sn, loadMiscFeesFromFile());
-        waivedAmounts.putIfAbsent(sn, 0.0);
-        refreshPendingStudentIds();
-        syncStudentToAdminAndPortal(sn);
+        waived.putIfAbsent(sn, 0.0);
+        syncStudent(sn);
         return sn;
     }
 
-    public Student findStudent(String studentNumber) {
-        if (studentNumber == null) return null;
-        for (Student s : studentRepo.findAll()) {
-            if (s.getStudentNumber().equalsIgnoreCase(studentNumber.trim())) return s;
-        }
+    public Student findStudent(String sn) {
+        if (sn == null) return null;
+        for (Student s : studentRepo.findAll()) if (s.getStudentNumber().equalsIgnoreCase(sn.trim())) return s;
         return null;
     }
 
-    public Student resolveStudentForPortal(String linkedId) {
-        Student direct = findStudent(linkedId);
-        if (direct != null) return direct;
+    public Student resolveStudentForPortal(String lid) {
+        Student d = findStudent(lid);
+        if (d != null) return d;
         List<Student> all = studentRepo.findAll();
         return all.isEmpty() ? null : all.get(all.size() - 1);
     }
 
     public List<Student> getStudents() { return studentRepo.findAll(); }
 
-    public boolean addSubject(String code, String title, int units, double feePerUnit, String instructor) {
-        String subjCode = code.trim().toUpperCase();
-        List<Subject> subjects = subjectRepo.findAll();
-        for (Subject s : subjects) {
-            if (s.getCode().equalsIgnoreCase(subjCode)) return false;
-        }
-        String inst = (instructor == null || instructor.isBlank())
-                ? DEFAULT_INSTRUCTORS.get(subjects.size() % DEFAULT_INSTRUCTORS.size()) : instructor.trim();
-        subjects.add(new Subject(subjCode, title.trim(), units, feePerUnit, inst));
-        subjectRepo.saveAll(subjects);
+    public boolean addSubject(String code, String title, int units, double fee, String inst) {
+        String c = code.trim().toUpperCase();
+        List<Subject> subs = subjectRepo.findAll();
+        for (Subject s : subs) if (s.getCode().equalsIgnoreCase(c)) return false;
+        String ins = (inst == null || inst.isBlank()) ? INSTRUCTORS.get(subs.size() % INSTRUCTORS.size()) : inst.trim();
+        subs.add(new Subject(c, title.trim(), units, fee, ins));
+        subjectRepo.saveAll(subs);
         return true;
     }
 
-    public List<Subject> getSubjects() {
-        assignDefaultInstructorsToUnassignedSubjects();
-        return subjectRepo.findAll();
-    }
+    public List<Subject> getSubjects() { assignDefaultInstructors(); return subjectRepo.findAll(); }
 
     public Subject findSubject(String code) {
         if (code == null) return null;
-        for (Subject s : getSubjects()) {
-            if (s.getCode().equalsIgnoreCase(code.trim())) return s;
-        }
+        for (Subject s : getSubjects()) if (s.getCode().equalsIgnoreCase(code.trim())) return s;
         return null;
     }
 
-    public List<Subject> getSubjectsForInstructor(String instructorId) {
-        List<Subject> list = new ArrayList<>();
-        for (Subject s : getSubjects()) {
-            if (s.getInstructor().equalsIgnoreCase(instructorId.trim())) list.add(s);
-        }
-        return list;
+    public List<Subject> getSubjectsForInstructor(String instId) {
+        List<Subject> out = new ArrayList<>();
+        for (Subject s : getSubjects()) if (s.getInstructor().equalsIgnoreCase(instId.trim())) out.add(s);
+        return out;
     }
 
-    public String enrollStudent(String studentNumber, String subjectCode, String semester) {
-        String sn = studentNumber.trim(), sc = subjectCode.trim().toUpperCase();
-        if (findStudent(sn) == null) return "Student not found.";
-        if (findSubject(sc) == null) return "Subject not found.";
-        List<EnrollmentRecord> records = enrollmentRepo.findAll();
-        for (EnrollmentRecord r : records) {
-            if (r.getStudentNumber().equalsIgnoreCase(sn) && r.getSubjectCode().equalsIgnoreCase(sc)
-                    && r.getSemester().equalsIgnoreCase(semester.trim())) {
-                return "Student is already enrolled in this subject for the given semester.";
-            }
+    public String enrollStudent(String sn, String sc, String sem) {
+        if (findStudent(sn.trim()) == null) return "Student not found.";
+        if (findSubject(sc.trim().toUpperCase()) == null) return "Subject not found.";
+        List<EnrollmentRecord> list = enrollRepo.findAll();
+        for (EnrollmentRecord r : list) {
+            if (r.getStudentNumber().equalsIgnoreCase(sn.trim()) && r.getSubjectCode().equalsIgnoreCase(sc.trim())
+                    && r.getSemester().equalsIgnoreCase(sem.trim())) return "Already enrolled in this subject.";
         }
-        String id = "ENR-" + (records.size() + 1) + "-" + System.currentTimeMillis() % 10000;
-        records.add(new EnrollmentRecord(id, sn, sc, semester.trim(), "ENROLLED", "N/A"));
-        enrollmentRepo.saveAll(records);
-        syncStudentToAdminAndPortal(sn);
+        String id = "ENR-" + (list.size() + 1) + "-" + System.currentTimeMillis() % 10000;
+        list.add(new EnrollmentRecord(id, sn.trim(), sc.trim().toUpperCase(), sem.trim(), "ENROLLED", "N/A"));
+        enrollRepo.saveAll(list);
+        syncStudent(sn.trim());
         return "Enrollment successful. Record ID: " + id;
     }
 
-    public List<EnrollmentRecord> getEnrollmentsByStudent(String studentNumber) {
-        List<EnrollmentRecord> list = new ArrayList<>();
-        for (EnrollmentRecord r : enrollmentRepo.findAll()) {
-            if (r.getStudentNumber().equalsIgnoreCase(studentNumber.trim())) list.add(r);
-        }
-        return list;
+    public List<EnrollmentRecord> getEnrollmentsByStudent(String sn) {
+        List<EnrollmentRecord> out = new ArrayList<>();
+        for (EnrollmentRecord r : enrollRepo.findAll()) if (r.getStudentNumber().equalsIgnoreCase(sn.trim())) out.add(r);
+        return out;
     }
 
-    public List<String> getAdminEnrollmentAndInstructorReport() {
-        assignDefaultInstructorsToUnassignedSubjects();
+    public List<EnrollmentRecord> getEnrollmentsBySubject(String sc) {
+        List<EnrollmentRecord> out = new ArrayList<>();
+        for (EnrollmentRecord r : enrollRepo.findAll()) if (r.getSubjectCode().equalsIgnoreCase(sc.trim())) out.add(r);
+        return out;
+    }
+
+    public List<String> getAdminEnrollmentReport() {
+        assignDefaultInstructors();
         List<String> out = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
         int i = 0;
         for (Student st : studentRepo.findAll()) {
-            List<EnrollmentRecord> recs = getEnrollmentsByStudent(st.getStudentNumber());
+            var recs = getEnrollmentsByStudent(st.getStudentNumber());
             if (recs.isEmpty()) {
-                String line = "[NOT ENROLLED] " + st.getStudentNumber() + " - " + st.getFullName()
-                        + " (" + st.getCourse() + " Yr " + st.getYearLevel() + ") | No enrolled subjects";
-                if (seen.add(line)) out.add(line);
+                String l = "[NOT ENROLLED] " + st.getStudentNumber() + " - " + st.getFullName() + " | No enrolled subjects";
+                if (seen.add(l)) out.add(l);
             } else {
                 for (EnrollmentRecord r : recs) {
-                    Subject subj = findSubject(r.getSubjectCode());
-                    String title = subj != null ? subj.getTitle() : r.getSubjectCode();
-                    String line = "[ENROLLED] " + st.getStudentNumber() + " - " + st.getFullName()
-                            + " | Subject: " + r.getSubjectCode() + " (" + title + ")"
-                            + " | Instructor: " + resolveInstructor(subj, i++)
-                            + " | Period: " + r.getSemester() + " | Grade: " + r.getGrade();
-                    if (seen.add(line)) out.add(line);
+                    Subject sub = findSubject(r.getSubjectCode());
+                    String l = "[ENROLLED] " + st.getStudentNumber() + " - " + st.getFullName()
+                            + " | " + r.getSubjectCode() + " | Instructor: " + pickInstructor(sub, i++)
+                            + " | " + r.getSemester() + " | Grade: " + r.getGrade();
+                    if (seen.add(l)) out.add(l);
                 }
             }
         }
-        return out.isEmpty() ? List.of("No students or enrollment records found.") : out;
+        return out.isEmpty() ? List.of("No student records found.") : out;
     }
 
-    public List<String> getRegistrarEnrollmentSummary(String filterStudentNo) {
+    public List<String> getStudentSubjectsWithInstructor(String sn) {
+        assignDefaultInstructors();
         List<String> out = new ArrayList<>();
-        Set<String> seen = new LinkedHashSet<>();
-        List<Student> targets = (filterStudentNo != null && !filterStudentNo.isBlank())
-                ? (findStudent(filterStudentNo.trim()) != null ? List.of(findStudent(filterStudentNo.trim())) : List.of())
-                : studentRepo.findAll();
-
-        for (Student st : targets) {
-            List<EnrollmentRecord> recs = getEnrollmentsByStudent(st.getStudentNumber());
-            if (recs.isEmpty()) {
-                String line = "[NOT ENROLLED] " + st.getStudentNumber() + " - " + st.getFullName()
-                        + " (" + st.getCourse() + " Yr " + st.getYearLevel() + ") | No subjects enrolled";
-                if (seen.add(line)) out.add(line);
-            } else {
-                for (EnrollmentRecord r : recs) {
-                    String line = "[ENROLLED] " + st.getStudentNumber() + " - " + st.getFullName()
-                            + " | Subject: " + r.getSubjectCode() + " | Period: " + r.getSemester() + " | Status: " + r.getStatus();
-                    if (seen.add(line)) out.add(line);
-                }
-            }
-        }
-        return out.isEmpty() ? List.of("[NOT ENROLLED] No student enrollment records found.") : out;
-    }
-
-    public List<String> getStudentEnrolledSubjectsWithInstructor(String studentNumber) {
-        assignDefaultInstructorsToUnassignedSubjects();
-        List<String> lines = new ArrayList<>();
         int i = 0;
-        for (EnrollmentRecord r : getEnrollmentsByStudent(studentNumber)) {
-            Subject subj = findSubject(r.getSubjectCode());
-            String title = subj != null ? subj.getTitle() : r.getSubjectCode();
-            lines.add("[ENROLLED] " + r.getSubjectCode() + " - " + title
-                    + " | Instructor: " + resolveInstructor(subj, i++)
-                    + " | Period: " + r.getSemester() + " | Grade: " + r.getGrade() + " (" + r.getStatus() + ")");
+        for (EnrollmentRecord r : getEnrollmentsByStudent(sn)) {
+            Subject sub = findSubject(r.getSubjectCode());
+            out.add("[ENROLLED] " + r.getSubjectCode() + (sub != null ? " - " + sub.getTitle() : "")
+                    + " | Instructor: " + pickInstructor(sub, i++) + " | " + r.getSemester() + " | Grade: " + r.getGrade());
         }
-        return lines;
+        return out;
     }
 
-    public List<EnrollmentRecord> getEnrollmentsBySubject(String subjectCode) {
-        List<EnrollmentRecord> list = new ArrayList<>();
-        for (EnrollmentRecord r : enrollmentRepo.findAll()) {
-            if (r.getSubjectCode().equalsIgnoreCase(subjectCode.trim())) list.add(r);
-        }
-        return list;
-    }
-
-    public boolean updateGrade(String recordId, String grade) {
-        List<EnrollmentRecord> records = enrollmentRepo.findAll();
-        for (EnrollmentRecord r : records) {
-            if (r.getRecordId().equalsIgnoreCase(recordId.trim())) {
+    public boolean updateGrade(String recId, String grade) {
+        List<EnrollmentRecord> list = enrollRepo.findAll();
+        for (EnrollmentRecord r : list) {
+            if (r.getRecordId().equalsIgnoreCase(recId.trim())) {
                 r.setGrade(grade.trim().toUpperCase());
                 r.setStatus("GRADED");
-                enrollmentRepo.saveAll(records);
-                syncStudentToAdminAndPortal(r.getStudentNumber());
+                enrollRepo.saveAll(list);
+                syncStudent(r.getStudentNumber());
                 return true;
             }
         }
         return false;
     }
 
-    public double calculateTotalAssessment(String studentNumber) {
-        double tuition = 0.0, fallback = getTuitionRateFromFile();
+    public double calculateTotalAssessment(String sn) {
+        double t = 0.0, rate = getTuitionRateFromFile();
         Map<String, Subject> map = new HashMap<>();
         for (Subject s : getSubjects()) map.put(s.getCode().toUpperCase(), s);
-        for (EnrollmentRecord r : getEnrollmentsByStudent(studentNumber)) {
+        for (EnrollmentRecord r : getEnrollmentsByStudent(sn)) {
             Subject s = map.get(r.getSubjectCode().toUpperCase());
-            if (s != null) tuition += s.getUnits() * (s.getFeePerUnit() > 0 ? s.getFeePerUnit() : fallback);
+            if (s != null) t += s.getUnits() * (s.getFeePerUnit() > 0 ? s.getFeePerUnit() : rate);
         }
-        return tuition;
+        return t;
     }
 
-    public void setAdditionalFees(String studentNumber, double labFee, double miscFee) {
-        labFees.put(studentNumber.trim(), Math.max(0.0, labFee));
-        miscFees.put(studentNumber.trim(), Math.max(0.0, miscFee));
-        syncStudentToAdminAndPortal(studentNumber.trim());
+    public void setAdditionalFees(String sn, double lab, double misc) {
+        labFees.put(sn.trim(), Math.max(0.0, lab));
+        miscFees.put(sn.trim(), Math.max(0.0, misc));
+        syncStudent(sn.trim());
     }
 
-    public void waiveFee(String studentNumber, double amount) {
-        String sn = studentNumber.trim();
-        waivedAmounts.put(sn, waivedAmounts.getOrDefault(sn, 0.0) + Math.max(0.0, amount));
-        syncStudentToAdminAndPortal(sn);
+    public void waiveFee(String sn, double amt) {
+        waived.put(sn.trim(), waived.getOrDefault(sn.trim(), 0.0) + Math.max(0.0, amt));
+        syncStudent(sn.trim());
     }
 
-    public double getLabFee(String studentNumber) { return labFees.getOrDefault(studentNumber.trim(), DEFAULT_LAB_FEE); }
-    public double getMiscFee(String studentNumber) { return miscFees.getOrDefault(studentNumber.trim(), loadMiscFeesFromFile()); }
-    public double getWaivedAmount(String studentNumber) { return waivedAmounts.getOrDefault(studentNumber.trim(), 0.0); }
+    public double getLabFee(String sn) { return labFees.getOrDefault(sn.trim(), DEF_LAB); }
+    public double getMiscFee(String sn) { return miscFees.getOrDefault(sn.trim(), loadMiscFeesFromFile()); }
+    public double getWaivedAmount(String sn) { return waived.getOrDefault(sn.trim(), 0.0); }
 
-    public double calculateTotalPaid(String studentNumber) {
-        double paid = 0.0;
-        for (Payment p : getPaymentsByStudent(studentNumber)) paid += p.getAmount();
-        return paid;
+    public double calculateTotalPaid(String sn) {
+        double p = 0.0;
+        for (Payment x : getPaymentsByStudent(sn)) p += x.getAmount();
+        return p;
     }
 
-    public double calculateBalance(String studentNumber) {
-        double total = Math.max(0.0, calculateTotalAssessment(studentNumber) + getLabFee(studentNumber)
-                + getMiscFee(studentNumber) - getWaivedAmount(studentNumber));
-        return Math.max(0.0, total - calculateTotalPaid(studentNumber));
+    public double calculateBalance(String sn) {
+        double due = Math.max(0.0, calculateTotalAssessment(sn) + getLabFee(sn) + getMiscFee(sn) - getWaivedAmount(sn));
+        return Math.max(0.0, due - calculateTotalPaid(sn));
     }
 
-    public String recordPayment(String studentNumber, double amount, String method) {
-        String sn = studentNumber.trim();
-        if (findStudent(sn) == null) return "Student not found.";
-        if (amount <= 0) return "Amount must be greater than zero.";
-        List<Payment> payments = paymentRepo.findAll();
-        String id = "PAY-" + (payments.size() + 1) + "-" + System.currentTimeMillis() % 10000;
-        payments.add(new Payment(id, sn, amount, method.trim().toUpperCase(), LocalDate.now().toString()));
-        paymentRepo.saveAll(payments);
-        syncStudentToAdminAndPortal(sn);
-        return "Payment recorded. Receipt ID: " + id + " | Record synced to Admin & Student Portal.";
+    public String recordPayment(String sn, double amt, String method) {
+        if (findStudent(sn.trim()) == null) return "Student not found.";
+        if (amt <= 0) return "Amount must be greater than zero.";
+        List<Payment> list = payRepo.findAll();
+        String id = "PAY-" + (list.size() + 1) + "-" + System.currentTimeMillis() % 10000;
+        list.add(new Payment(id, sn.trim(), amt, method.trim().toUpperCase(), LocalDate.now().toString()));
+        payRepo.saveAll(list);
+        syncStudent(sn.trim());
+        return "Payment recorded. Receipt ID: " + id;
     }
 
-    public List<Payment> getPaymentsByStudent(String studentNumber) {
-        List<Payment> list = new ArrayList<>();
-        for (Payment p : paymentRepo.findAll()) {
-            if (p.getStudentNumber().equalsIgnoreCase(studentNumber.trim())) list.add(p);
-        }
-        return list;
+    public List<Payment> getPaymentsByStudent(String sn) {
+        List<Payment> out = new ArrayList<>();
+        for (Payment p : payRepo.findAll()) if (p.getStudentNumber().equalsIgnoreCase(sn.trim())) out.add(p);
+        return out;
     }
 
-    public String submitShiftingRequest(String studentNumber, String targetCourse, String reason) {
-        Student st = findStudent(studentNumber.trim());
+    public String submitShiftingRequest(String sn, String target, String reason) {
+        Student st = findStudent(sn.trim());
         if (st == null) return "Student record not found.";
-        List<ShiftingRequest> list = shiftingRepo.findAll();
+        List<ShiftingRequest> list = shiftRepo.findAll();
         String id = "SHF-" + (list.size() + 1) + "-" + System.currentTimeMillis() % 10000;
-        list.add(new ShiftingRequest(id, st.getStudentNumber(), st.getCourse(), targetCourse.trim().toUpperCase(), reason.trim(), "PENDING"));
-        shiftingRepo.saveAll(list);
+        list.add(new ShiftingRequest(id, st.getStudentNumber(), st.getCourse(), target.trim().toUpperCase(), reason.trim(), "PENDING"));
+        shiftRepo.saveAll(list);
         return "Shifting request submitted. Request ID: " + id;
     }
 
-    public List<ShiftingRequest> getShiftingRequests() { return shiftingRepo.findAll(); }
+    public List<ShiftingRequest> getShiftingRequests() { return shiftRepo.findAll(); }
 
-    public List<ShiftingRequest> getShiftingRequestsByStudent(String studentNumber) {
-        List<ShiftingRequest> list = new ArrayList<>();
-        for (ShiftingRequest sr : shiftingRepo.findAll()) {
-            if (sr.getStudentNumber().equalsIgnoreCase(studentNumber.trim())) list.add(sr);
-        }
-        return list;
+    public List<ShiftingRequest> getShiftingRequestsByStudent(String sn) {
+        List<ShiftingRequest> out = new ArrayList<>();
+        for (ShiftingRequest r : shiftRepo.findAll()) if (r.getStudentNumber().equalsIgnoreCase(sn.trim())) out.add(r);
+        return out;
     }
 
-    public boolean processShiftingRequest(String requestId, boolean approve) {
-        List<ShiftingRequest> list = shiftingRepo.findAll();
-        for (ShiftingRequest sr : list) {
-            if (sr.getRequestId().equalsIgnoreCase(requestId.trim())) {
-                sr.setStatus(approve ? "APPROVED" : "REJECTED");
-                shiftingRepo.saveAll(list);
+    public boolean processShiftingRequest(String reqId, boolean approve) {
+        List<ShiftingRequest> list = shiftRepo.findAll();
+        for (ShiftingRequest r : list) {
+            if (r.getRequestId().equalsIgnoreCase(reqId.trim())) {
+                r.setStatus(approve ? "APPROVED" : "REJECTED");
+                shiftRepo.saveAll(list);
                 if (approve) {
-                    List<Student> students = studentRepo.findAll();
-                    for (Student s : students) {
-                        if (s.getStudentNumber().equalsIgnoreCase(sr.getStudentNumber())) {
-                            s.setCourse(sr.getTargetCourse());
-                            studentRepo.saveAll(students);
-                            syncStudentToAdminAndPortal(s.getStudentNumber());
+                    List<Student> studs = studentRepo.findAll();
+                    for (Student s : studs) {
+                        if (s.getStudentNumber().equalsIgnoreCase(r.getStudentNumber())) {
+                            s.setCourse(r.getTargetCourse());
+                            studentRepo.saveAll(studs);
+                            syncStudent(s.getStudentNumber());
                             break;
                         }
                     }
