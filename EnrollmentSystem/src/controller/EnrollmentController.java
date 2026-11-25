@@ -232,24 +232,33 @@ public class EnrollmentController {
             String c = input.readLine("Choice: ");
             switch (c) {
                 case "1" -> {
+                    view.showMessage("\n[Student Step 1] My Profile & Registration Info");
                     Student st = service.findStudent(studNo);
                     if (st == null) view.showMessage("No student record found for '" + studNo + "'. Ask Registrar to register it first.");
                     else view.showMessage(st.toString());
                 }
-                case "2" -> view.printEnrollments(service.getEnrollmentsByStudent(studNo));
+                case "2" -> {
+                    view.showMessage("\n[Student Step 2] My Enrolled Subjects & Grades");
+                    view.printEnrollments(service.getEnrollmentsByStudent(studNo));
+                }
                 case "3" -> {
+                    view.showMessage("\n[Student Step 3] My Assessment Slip & Tuition Balance");
                     Student st = service.findStudent(studNo);
                     if (st == null) view.showMessage("No student record found for '" + studNo + "'.");
                     else showBilling(st, studNo);
                 }
                 case "4" -> {
+                    view.showMessage("\n[Student Step 4] Submit Shifting Request");
                     String target = input.readNonEmpty("Target Course (e.g. BSCS): ");
                     String reason = input.readNonEmpty("Reason for shifting: ");
                     view.showMessage(service.submitShiftingRequest(studNo, target, reason));
                 }
-                case "5" -> view.printShiftingRequests(service.getShiftingRequestsByStudent(studNo));
+                case "5" -> {
+                    view.showMessage("\n[Student Step 5] My Shifting Requests");
+                    view.printShiftingRequests(service.getShiftingRequestsByStudent(studNo));
+                }
                 case "0" -> {
-                    view.showMessage("Logging out...");
+                    view.showMessage("Logging out from Student Portal...");
                     return;
                 }
                 default -> view.showMessage("Invalid choice.");
@@ -277,7 +286,7 @@ public class EnrollmentController {
                     }
                 }
                 case "0" -> {
-                    view.showMessage("Logging out...");
+                    view.showMessage("Logging out from Instructor Portal...");
                     return;
                 }
                 default -> view.showMessage("Invalid choice.");
