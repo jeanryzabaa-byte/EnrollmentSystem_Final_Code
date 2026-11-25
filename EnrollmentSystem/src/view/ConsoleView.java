@@ -1,12 +1,6 @@
 package view;
 
-import model.EnrollmentRecord;
-import model.Payment;
-import model.ShiftingRequest;
-import model.Student;
-import model.Subject;
-import model.User;
-
+import model.*;
 import java.util.List;
 
 public class ConsoleView {
@@ -75,63 +69,35 @@ public class ConsoleView {
     }
 
     public void printUsers(List<User> users) {
-        if (users.isEmpty()) {
-            System.out.println("No users found.");
-            return;
-        }
+        if (users.isEmpty()) { System.out.println("No users found."); return; }
         for (User u : users) {
             System.out.println("- " + u.getUsername() + " | Role: " + u.getRole() + " | LinkedID: " + u.getLinkedId());
         }
     }
 
     public void printStudents(List<Student> students) {
-        if (students.isEmpty()) {
-            System.out.println("No student records found.");
-            return;
-        }
-        for (Student s : students) {
-            System.out.println(s);
-        }
+        if (students.isEmpty()) { System.out.println("No student records found."); return; }
+        for (Student s : students) System.out.println(s);
     }
 
     public void printSubjects(List<Subject> subjects) {
-        if (subjects.isEmpty()) {
-            System.out.println("No subjects found.");
-            return;
-        }
-        for (Subject s : subjects) {
-            System.out.println(s);
-        }
+        if (subjects.isEmpty()) { System.out.println("No subjects found."); return; }
+        for (Subject s : subjects) System.out.println(s);
     }
 
     public void printEnrollments(List<EnrollmentRecord> records) {
-        if (records.isEmpty()) {
-            System.out.println("No enrollment records found.");
-            return;
-        }
-        for (EnrollmentRecord r : records) {
-            System.out.println(r);
-        }
+        if (records.isEmpty()) { System.out.println("No enrollment records found."); return; }
+        for (EnrollmentRecord r : records) System.out.println(r);
     }
 
     public void printPayments(List<Payment> payments) {
-        if (payments.isEmpty()) {
-            System.out.println("No payment records found.");
-            return;
-        }
-        for (Payment p : payments) {
-            System.out.println(p);
-        }
+        if (payments.isEmpty()) { System.out.println("No payment records found."); return; }
+        for (Payment p : payments) System.out.println(p);
     }
 
     public void printShiftingRequests(List<ShiftingRequest> requests) {
-        if (requests.isEmpty()) {
-            System.out.println("No shifting requests found.");
-            return;
-        }
-        for (ShiftingRequest sr : requests) {
-            System.out.println(sr);
-        }
+        if (requests.isEmpty()) { System.out.println("No shifting requests found."); return; }
+        for (ShiftingRequest sr : requests) System.out.println(sr);
     }
 
     public void printDetailedBilling(Student student, double tuition, double labFee, double miscFee,
