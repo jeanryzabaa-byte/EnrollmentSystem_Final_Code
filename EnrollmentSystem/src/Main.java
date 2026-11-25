@@ -1,9 +1,7 @@
-package enrollmentsystem;
-
-import enrollmentsystem.controller.EnrollmentController;
-import enrollmentsystem.service.EnrollmentService;
-import enrollmentsystem.util.InputValidator;
-import enrollmentsystem.view.ConsoleView;
+import controller.EnrollmentController;
+import service.EnrollmentService;
+import util.InputValidator;
+import view.ConsoleView;
 
 import java.util.Scanner;
 
