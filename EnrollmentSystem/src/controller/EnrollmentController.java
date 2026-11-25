@@ -46,8 +46,9 @@ public class EnrollmentController {
     }
 
     private void routeByRole(User user) {
-        switch (user.getRole()) {
-            case "ADMIN" -> handleAdmin();
+        String role = user.getRole() == null ? "" : user.getRole().trim().toUpperCase();
+        switch (role) {
+            case "ADMIN", "SYSTEM ADMINISTRATOR" -> handleAdmin();
             case "REGISTRAR" -> handleRegistrar();
             case "CASHIER" -> handleCashier();
             case "STUDENT" -> handleStudent(user);
