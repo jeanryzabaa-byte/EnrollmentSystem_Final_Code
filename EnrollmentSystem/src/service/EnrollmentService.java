@@ -59,6 +59,22 @@ public class EnrollmentService {
     public double loadMiscFeesFromFile() { return readFees("", true, DEF_MISC); }
     public double getTuitionRateFromFile() { return readFees("TUITION_PER_UNIT", false, 150.0); }
 
+    public List<String> getFeeBreakdownLines() {
+        List<String> out = new ArrayList<>();
+        Path f = dir.resolve("fees.txt");
+        if (Files.exists(f)) {
+            try {
+                for (String l : Files.readAllLines(f)) {
+                    String[] p = l.split("\\|");
+                    if (p.length >= 2) out.add("  * " + p[0].trim() + ": " + String.format("%.2f", Double.parseDouble(p[1].trim())));
+                }
+            } catch (Exception ignored) { }
+        }
+        out.add("  * LAB_FEE: " + String.format("%.2f", DEF_LAB));
+        getSubjects().forEach(s -> out.add("  * " + s.getCode() + " (" + s.getUnits() + "u): " + String.format("%.2f", s.getUnits() * s.getFeePerUnit())));
+        return out;
+    }
+
     private String instAt(Subject s, int i) {
         if (s != null && s.getInstructor() != null) {
             String cur = s.getInstructor().trim();
