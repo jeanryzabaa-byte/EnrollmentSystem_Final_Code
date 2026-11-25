@@ -1,7 +1,7 @@
 package view;
 
-import enrollmentsystem.model.enrollment.EnrollmentRecord;
-import enrollmentsystem.model.subject.Subject;
+import model.EnrollmentRecord;
+import model.Subject;
 
 import java.util.List;
 
@@ -36,4 +36,3 @@ public class EnrollmentMenu {
         }
     }
 }
-        
