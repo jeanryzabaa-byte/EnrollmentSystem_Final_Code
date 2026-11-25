@@ -3,8 +3,7 @@ package repository;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 public class TextFileRepository<T> implements FileRepository<T> {
