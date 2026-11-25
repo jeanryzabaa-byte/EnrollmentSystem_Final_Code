@@ -1,30 +1,11 @@
 package model;
 
-import controller.EnrollmentController;
-import service.EnrollmentService;
-import util.InputValidator;
-import view.ConsoleView;
-
-import java.util.Scanner;
-
-public class Main {
-    public static void main(String[] args) {
-        try (Scanner scanner = new Scanner(System.in)) {
-            EnrollmentService service = new EnrollmentService();
-            ConsoleView view = new ConsoleView();
-            InputValidator input = new InputValidator(scanner);
-            EnrollmentController controller = new EnrollmentController(service, view, input);
-            controller.run();
-        }
-    }
-}
-
 public class Student {
     private final String studentNumber;
     private final String fullName;
     private String course;
     private int yearLevel;
-    private String status; // ACTIVE, INACTIVE, SHIFTED
+    private String status;
 
     public Student(String studentNumber, String fullName, String course, int yearLevel, String status) {
         this.studentNumber = studentNumber;
