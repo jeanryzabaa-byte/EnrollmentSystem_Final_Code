@@ -1,49 +1,42 @@
 package view;
 
-import java.util.ArrayList;
 import java.util.Scanner;
-import model.Student;
 
 public class EnrollmentMenu {
-    private final Scanner scanner;
+    private Scanner scanner;
 
     public EnrollmentMenu(Scanner scanner) {
         this.scanner = scanner;
     }
 
     public void displayMenu() {
-        System.out.println("\n----------------------------------------");
-        System.out.println("      *** STUDENT ENROLLMENT SYSTEM ***   ");
-        System.out.println("----------------------------------------");
+        System.out.println("\n=== STUDENT ENROLLMENT SYSTEM ===");
         System.out.println("1. Register Student");
         System.out.println("2. Display All Student");
         System.out.println("3. Search Student");
         System.out.println("4. Update Student");
         System.out.println("5. Delete Student");
-        System.out.println("6. Exit");
-        System.out.println("----------------------------------------");
+        System.out.println("6. Manage Subjects");
+        System.out.println("7. Enroll Subject / Enrollment Record");
+        System.out.println("8. Record Payment");
+        System.out.println("9. Shifting Request");
+        System.out.println("10. Manage / View Users");
+        System.out.println("0. Exit");
         System.out.print("Enter your choice: ");
     }
 
-    public String getInput(String message) {
-        System.out.print(message);
+    public int getChoice() {
+        while (!scanner.hasNextInt()) {
+            System.out.print("Please enter a valid number: ");
+            scanner.next();
+        }
+        int choice = scanner.nextInt();
+        scanner.nextLine(); // consume newline
+        return choice;
+    }
+
+    public String readLine(String prompt) {
+        System.out.print(prompt);
         return scanner.nextLine().trim();
-    }
-
-    public void displayStudents(ArrayList<Student> students) {
-        if (students.isEmpty()) {
-            System.out.println("\nNo student records found.");
-            return;
-        }
-
-        System.out.println("\n========== STUDENT RECORDS ==========");
-        for (Student student : students) {
-            student.displayInfo();
-            System.out.println("----------------------------------------");
-        }
-    }
-
-    public void displayMessage(String message) {
-        System.out.println(message);
     }
 }
