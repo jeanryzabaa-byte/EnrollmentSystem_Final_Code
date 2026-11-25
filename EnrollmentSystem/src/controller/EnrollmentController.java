@@ -217,12 +217,17 @@ public class EnrollmentController {
             String sn = input.readNonEmpty("Student No.: ");
             String target = input.readNonEmpty("Target Course (e.g. BSCS): ");
             String reason = input.readNonEmpty("Reason for shifting: ");
-            view.showMessage(service.submitShiftingRequest(sn, target, reason));
+            String res = service.submitShiftingRequest(sn, target, reason);
+            view.showMessage("Shifting request status: OKAY / NADAWAT NA. " + res);
             return;
         }
         var reqs = service.getShiftingRequests();
-        view.printShiftingRequests(reqs);
-        if (!reqs.isEmpty()) {
+        if (reqs.isEmpty()) {
+            view.showMessage("No shifting requests found.");
+        } else {
+            for (var req : reqs) {
+                view.showMessage(req.toString() + " | OKAY / NADAWAT NA");
+            }
             String reqId = input.readLine("Enter Request ID to process (or Enter to skip): ");
             if (!reqId.isEmpty()) {
                 boolean approve = input.readLine("Approve request? (y/n): ").equalsIgnoreCase("y");
@@ -336,7 +341,14 @@ public class EnrollmentController {
                     view.showMessage("\n[Student Step 2] My Enrolled Subjects & Grades");
                     Student current = service.resolveStudentForPortal(user.getLinkedId());
                     String id = current != null ? current.getStudentNumber() : studNo;
-                    view.printEnrollments(service.getEnrollmentsByStudent(id));
+                    var enrolledList = service.getEnrollmentsByStudent(id);
+                    if (enrolledList.isEmpty()) {
+                        String statusTag = current != null ? current.getStatus() : "NOT ENROLLED";
+                        view.showMessage("Status: [" + statusTag + "] - No enrolled subjects yet for Student ID " + id + ".");
+                    } else {
+                        view.showMessage("Status: [ENROLLED]");
+                        view.printEnrollments(enrolledList);
+                    }
                 }
                 case "3" -> {
                     view.showMessage("\n[Student Step 3] My Assessment Slip & Tuition Balance");
@@ -353,13 +365,21 @@ public class EnrollmentController {
                     String id = current != null ? current.getStudentNumber() : studNo;
                     String target = input.readNonEmpty("Target Course (e.g. BSCS): ");
                     String reason = input.readNonEmpty("Reason for shifting: ");
-                    view.showMessage(service.submitShiftingRequest(id, target, reason));
+                    String result = service.submitShiftingRequest(id, target, reason);
+                    view.showMessage("Shifting request status: OKAY / NADAWAT NA. " + result);
                 }
                 case "5" -> {
                     view.showMessage("\n[Student Step 5] My Shifting Requests");
                     Student current = service.resolveStudentForPortal(user.getLinkedId());
                     String id = current != null ? current.getStudentNumber() : studNo;
-                    view.printShiftingRequests(service.getShiftingRequestsByStudent(id));
+                    var myReqs = service.getShiftingRequestsByStudent(id);
+                    if (myReqs.isEmpty()) {
+                        view.showMessage("No shifting requests found.");
+                    } else {
+                        for (var req : myReqs) {
+                            view.showMessage(req.toString() + " | OKAY / NADAWAT NA");
+                        }
+                    }
                 }
                 case "0" -> {
                     view.showMessage("Logging out from Student Portal...");
