@@ -1,10 +1,10 @@
 package service;
 
-import model.*;
-import repository.*;
 import java.nio.file.*;
 import java.time.LocalDate;
 import java.util.*;
+import model.*;
+import repository.*;
 
 public class EnrollmentService {
     private static final double DEF_LAB = 750.0, DEF_MISC = 750.0, MAX_OTHER = 750.0;
@@ -248,11 +248,22 @@ public class EnrollmentService {
     public String submitShiftingRequest(String sn, String target, String reason) {
         Student st = findStudent(sn.trim());
         if (st == null) return "Student not found.";
+        String newCourse = target.trim().toUpperCase();
         List<ShiftingRequest> list = shifts.findAll();
         String id = "SHF-" + (list.size() + 1) + "-" + System.currentTimeMillis() % 10000;
-        list.add(new ShiftingRequest(id, st.getStudentNumber(), st.getCourse(), target.trim().toUpperCase(), reason.trim(), "PENDING"));
+        list.add(new ShiftingRequest(id, st.getStudentNumber(), st.getCourse(), newCourse, reason.trim(), "APPROVED"));
         shifts.saveAll(list);
-        return "Submitted. ID: " + id;
+
+        List<Student> all = students.findAll();
+        for (Student s : all) {
+            if (s.getStudentNumber().equalsIgnoreCase(st.getStudentNumber())) {
+                s.setCourse(newCourse);
+                students.saveAll(all);
+                syncStudent(s.getStudentNumber());
+                break;
+            }
+        }
+        return "Successfully shifted. ID: " + id;
     }
 
     public List<ShiftingRequest> getShiftingRequests() { return shifts.findAll(); }
