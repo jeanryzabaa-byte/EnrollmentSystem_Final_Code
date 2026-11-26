@@ -1,11 +1,14 @@
 package controller;
 
+import java.util.List;
 import model.*;
 import service.EnrollmentService;
 import util.InputValidator;
 import view.ConsoleView;
 
 public class EnrollmentController {
+    private static final List<String> COURSES = List.of("BSIT", "BSCS", "BSIS", "ACT", "ENTREP");
+
     private final EnrollmentService svc;
     private final ConsoleView view;
     private final InputValidator in;
@@ -34,6 +37,52 @@ public class EnrollmentController {
     }
 
     private boolean isYes(String s) { return s != null && (s.trim().equalsIgnoreCase("y") || s.trim().equalsIgnoreCase("yes")); }
+
+    private String readCourseChoice() {
+        view.showMessage("Courses: 1. BSIT | 2. BSCS | 3. BSIS | 4. ACT | 5. ENTREP (or type course code)");
+        String pick = in.readNonEmpty("Course: ").trim().toUpperCase();
+        return switch (pick) {
+            case "1" -> "BSIT";
+            case "2" -> "BSCS";
+            case "3" -> "BSIS";
+            case "4" -> "ACT";
+            case "5" -> "ENTREP";
+            default -> pick;
+        };
+    }
+
+    private int readYearFlexible() {
+        while (true) {
+            String raw = in.readNonEmpty("Year (e.g. 2 or 2ND YR): ").trim().toUpperCase();
+            String digits = raw.replaceAll("\\D+", "");
+            if (!digits.isEmpty()) {
+                int y = Integer.parseInt(digits);
+                if (y >= 1 && y <= 5) return y;
+            }
+            if (raw.contains("FIRST") || raw.contains("1ST")) return 1;
+            if (raw.contains("SECOND") || raw.contains("2ND")) return 2;
+            if (raw.contains("THIRD") || raw.contains("3RD")) return 3;
+            if (raw.contains("FOURTH") || raw.contains("4TH")) return 4;
+            if (raw.contains("FIFTH") || raw.contains("5TH")) return 5;
+            view.showMessage("Invalid year (1-5). Please try again.");
+        }
+    }
+
+    private void showEnrolledStudentsWithDetails() {
+        var list = svc.getStudents();
+        if (list.isEmpty()) { view.showMessage("No enrolled students."); return; }
+        for (Student s : list) {
+            var recs = svc.getEnrollmentsByStudent(s.getStudentNumber());
+            String subs = recs.isEmpty()
+                    ? "None"
+                    : String.join(", ", recs.stream().map(EnrollmentRecord::getSubjectCode).toList());
+            view.showMessage("  * " + s.getStudentNumber() + " - " + s.getFullName()
+                    + " | Course: " + s.getCourse()
+                    + " | Yr: " + s.getYearLevel()
+                    + " | Subjects: " + subs
+                    + " | Status: " + s.getStatus());
+        }
+    }
 
     private void admin() {
         while (true) {
@@ -67,14 +116,13 @@ public class EnrollmentController {
             switch (in.readLine("Choice: ")) {
                 case "1" -> enrollFlow("REGULAR", false);
                 case "2" -> enrollFlow("TRANSFEREE", true);
-                case "3" -> view.printStudents(svc.getStudents());
+                case "3" -> showEnrolledStudentsWithDetails();
                 case "4" -> {
                     String mode = in.readLine("1. Add New Subject | 2. Request/Enroll Subject to Student: ");
                     if (mode.equals("1")) {
                         view.showMessage(svc.addSubject(in.readNonEmpty("Code: "), in.readNonEmpty("Title: "), in.readInt("Units (1-10): ", 1, 10), in.readPositiveDouble("Rate/Unit: "), in.readLine("Instructor (opt): ")) ? "Subject Added." : "Exists.");
                     } else {
                         String sn = in.readNonEmpty("Student No.: ");
-                        svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u)"));
                         view.showMessage(svc.enrollStudent(sn, in.readNonEmpty("Subject Code: "), in.readNonEmpty("Semester: ")));
                     }
                 }
@@ -94,24 +142,22 @@ public class EnrollmentController {
             String prevSchool = in.readNonEmpty("Prev School: ");
             name = name + " [From: " + prevSchool + "]";
         }
-        String course = in.readNonEmpty("Course: ");
-        int yr = in.readInt("Year (1-5): ", 1, 5);
+        String course = readCourseChoice();
+        int yr = readYearFlexible();
 
         String id = svc.addStudentWithType(sn, name, course, yr, type);
         if (id == null) { view.showMessage("Exists."); return; }
         view.showMessage("Enrolled ID: " + id);
 
-        if (isYes(in.readLine("View & Select Subjects now? (y/n): "))) {
+        if (isYes(in.readLine("Enroll subjects? (y/n): "))) {
             String sem = in.readNonEmpty("Semester: ");
             do {
-                view.showMessage("\n--- AVAILABLE SUBJECTS ---");
-                svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u) | " + s.getInstructor()));
-                view.showMessage(svc.enrollStudent(id, in.readNonEmpty("Choose Subject Code: "), sem));
-            } while (isYes(in.readLine("Add another subject? (y/n): ")));
+                view.showMessage(svc.enrollStudent(id, in.readNonEmpty("Subject Code: "), sem));
+            } while (isYes(in.readLine("Another? (y/n): ")));
         }
 
-        if (isYes(in.readLine("Submit Shifting Request? (y/n): "))) {
-            view.showMessage(svc.submitShiftingRequest(id, in.readNonEmpty("Target Course: "), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
+        if (isYes(in.readLine("Shifting Request? (y/n): "))) {
+            view.showMessage(svc.submitShiftingRequest(id, readCourseChoice(), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
         }
 
         svc.syncStudent(id);
@@ -120,7 +166,7 @@ public class EnrollmentController {
 
     private void shifting() {
         if (in.readLine("1. Fill Up Shifting Request | 2. View/Process: ").equals("1")) {
-            view.showMessage(svc.submitShiftingRequest(in.readNonEmpty("Student No.: "), in.readNonEmpty("Target Course: "), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
+            view.showMessage(svc.submitShiftingRequest(in.readNonEmpty("Student No.: "), readCourseChoice(), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
             return;
         }
         var reqs = svc.getShiftingRequests();
@@ -135,7 +181,7 @@ public class EnrollmentController {
             view.showCashierMenu();
             String ch = in.readLine("Choice: ");
             if (ch.equals("0")) return;
-            if (ch.equals("6")) { svc.getStudents().forEach(s -> view.showMessage("  * " + s + " | Bal: " + String.format("%.2f", svc.calculateBalance(s.getStudentNumber())))); continue; }
+            if (ch.equals("6")) { showEnrolledStudentsWithDetails(); continue; }
             if (ch.equals("7")) {
                 String sn = (pre != null && !pre.isBlank()) ? pre : in.readNonEmpty("Student No.: ");
                 view.showMessage("\n--- FEES (" + sn + ") ---");
