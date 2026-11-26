@@ -143,6 +143,8 @@ public class EnrollmentController {
 
         if (isYes(in.readLine("Enroll subjects? (y/n): "))) {
             String sem = in.readNonEmpty("Semester: ");
+            view.showMessage("--- SUBJECTS ---");
+            svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + " - " + s.getTitle()));
             do {
                 view.showMessage(svc.enrollStudent(id, in.readNonEmpty("Subject Code: "), sem));
             } while (isYes(in.readLine("Another? (y/n): ")));
