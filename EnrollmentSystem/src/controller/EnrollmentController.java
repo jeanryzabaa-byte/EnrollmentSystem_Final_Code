@@ -11,7 +11,9 @@ public class EnrollmentController {
     private final InputValidator in;
 
     public EnrollmentController(EnrollmentService svc, ConsoleView view, InputValidator in) {
-        this.svc = svc; this.view = view; this.in = in;
+        this.svc = svc;
+        this.view = view;
+        this.in = in;
     }
 
     public void run() {
@@ -19,10 +21,19 @@ public class EnrollmentController {
         while (true) {
             view.showMainMenu();
             String ch = in.readLine("Choice: ");
-            if (ch.equals("2")) { view.showMessage("Goodbye!"); break; }
-            if (!ch.equals("1")) { view.showMessage("Invalid option."); continue; }
+            if (ch.equals("2")) {
+                view.showMessage("Goodbye!");
+                break;
+            }
+            if (!ch.equals("1")) {
+                view.showMessage("Invalid option.");
+                continue;
+            }
             User u = svc.login(in.readNonEmpty("Username: "), in.readPassword("Password: "));
-            if (u == null) { view.showMessage("Invalid login."); continue; }
+            if (u == null) {
+                view.showMessage("Invalid login.");
+                continue;
+            }
             view.showMessage("\nWelcome, " + u.getUsername() + " [" + u.getRole() + "]");
             String r = u.getRole().trim().toUpperCase();
             if (r.contains("ADMIN")) admin();
@@ -33,7 +44,9 @@ public class EnrollmentController {
         }
     }
 
-    private boolean isYes(String s) { return s != null && (s.trim().equalsIgnoreCase("y") || s.trim().equalsIgnoreCase("yes")); }
+    private boolean isYes(String s) {
+        return s != null && (s.trim().equalsIgnoreCase("y") || s.trim().equalsIgnoreCase("yes"));
+    }
 
     private String readCourseChoice() {
         view.showMessage("Courses: 1. BSIT | 2. BSCS | 3. BSIS | 4. ACT | 5. ENTREP (or type course code)");
@@ -67,7 +80,10 @@ public class EnrollmentController {
 
     private void showEnrolledStudentsWithDetails() {
         var list = svc.getStudents();
-        if (list.isEmpty()) { view.showMessage("No enrolled students."); return; }
+        if (list.isEmpty()) {
+            view.showMessage("No enrolled students.");
+            return;
+        }
         for (Student s : list) {
             var recs = svc.getEnrollmentsByStudent(s.getStudentNumber());
             String subs = recs.isEmpty()
@@ -83,7 +99,10 @@ public class EnrollmentController {
 
     private void viewShiftedRecords() {
         var reqs = svc.getShiftingRequests();
-        if (reqs.isEmpty()) { view.showMessage("No shifted records."); return; }
+        if (reqs.isEmpty()) {
+            view.showMessage("No shifted records.");
+            return;
+        }
         view.showMessage("\n--- SHIFTED RECORDS ---");
         reqs.forEach(r -> view.showMessage("  * " + r + " | Successfully shifted"));
     }
@@ -94,12 +113,22 @@ public class EnrollmentController {
             switch (in.readLine("Choice: ")) {
                 case "1" -> {
                     String role = in.readNonEmpty("Role (CASHIER / REGISTRAR): ");
-                    if (role.trim().equalsIgnoreCase("STUDENT")) { view.showMessage("STUDENT not allowed."); break; }
-                    view.showMessage(svc.addUser(in.readNonEmpty("Username: "), in.readPassword("Password: "), role, in.readNonEmpty("Linked ID: ")) ? "Added." : "Failed.");
+                    if (role.trim().equalsIgnoreCase("STUDENT")) {
+                        view.showMessage("STUDENT not allowed.");
+                        break;
+                    }
+                    view.showMessage(svc.addUser(
+                            in.readNonEmpty("Username: "),
+                            in.readPassword("Password: "),
+                            role,
+                            in.readNonEmpty("Linked ID: ")) ? "Added." : "Failed.");
                 }
                 case "2" -> view.printUsers(svc.getAddedUsersOnly());
                 case "3" -> svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u) | " + s.getInstructor()));
-                case "4" -> { svc.getAdminEnrollmentReport().forEach(l -> view.showMessage("  * " + l)); svc.getAdminSyncedRecords().forEach(r -> view.showMessage("  - " + r)); }
+                case "4" -> {
+                    svc.getAdminEnrollmentReport().forEach(l -> view.showMessage("  * " + l));
+                    svc.getAdminSyncedRecords().forEach(r -> view.showMessage("  - " + r));
+                }
                 case "0" -> { return; }
                 default -> view.showMessage("Invalid.");
             }
@@ -138,7 +167,10 @@ public class EnrollmentController {
         int yr = readYearFlexible();
 
         String id = svc.addStudentWithType(sn, name, course, yr, type);
-        if (id == null) { view.showMessage("Exists."); return; }
+        if (id == null) {
+            view.showMessage("Exists.");
+            return;
+        }
         view.showMessage("Enrolled ID: " + id);
 
         if (isYes(in.readLine("Enroll subjects? (y/n): "))) {
@@ -160,40 +192,62 @@ public class EnrollmentController {
 
     private void cashier(String pre) {
         while (true) {
-            view.showCashierMenu();
+            view.showMessage("\n=========== CASHIERING & TUITION MODULE ===========");
+            view.showMessage("1. View Fees");
+            view.showMessage("2. Set / Update Fees (Tuition, Reg, Lab, Misc, Waiver)");
+            view.showMessage("3. Record Tuition Payment");
+            view.showMessage("4. View Assessment Slip & Tuition Balance");
+            view.showMessage("5. View Student Payment History");
+            view.showMessage("6. View Students Record");
+            view.showMessage("0. Logout");
+            view.showMessage("==================================================");
             String ch = in.readLine("Choice: ");
             if (ch.equals("0")) return;
-            if (ch.equals("6")) { showEnrolledStudentsWithDetails(); continue; }
-            if (ch.equals("7")) {
-                String sn = (pre != null && !pre.isBlank()) ? pre : in.readNonEmpty("Student No.: ");
+            if (ch.equals("6")) {
+                showEnrolledStudentsWithDetails();
+                continue;
+            }
+            if (ch.equals("1")) {
+                String sn = (pre != null && !pre.isBlank() && in.readLine("Student No. [Enter=" + pre + "]: ").isEmpty())
+                        ? pre
+                        : in.readNonEmpty("Student No.: ");
                 view.showMessage("\n--- FEES (" + sn + ") ---");
                 view.showMessage("  * Tuition Fee: " + String.format("%.2f", svc.getTuitionFee(sn)));
                 view.showMessage("  * Registration Fee: " + String.format("%.2f", svc.getRegistrationFee(sn)));
-                view.showMessage("  * Lab: " + String.format("%.2f", svc.getLabFee(sn)));
-                view.showMessage("  * Misc: " + String.format("%.2f", svc.getMiscFee(sn)));
-                view.showMessage("  * Waive: " + String.format("%.2f", svc.getWaivedAmount(sn)));
+                view.showMessage("  * Lab Fee: " + String.format("%.2f", svc.getLabFee(sn)));
+                view.showMessage("  * Misc Fee: " + String.format("%.2f", svc.getMiscFee(sn)));
+                view.showMessage("  * Waive / Discount: " + String.format("%.2f", svc.getWaivedAmount(sn)));
                 continue;
             }
-            if (!ch.matches("[1-5]")) { view.showMessage("Invalid."); continue; }
-            String sn = (pre != null && !pre.isBlank() && in.readLine("Student No. [Enter=" + pre + "]: ").isEmpty()) ? pre : in.readNonEmpty("Student No.: ");
+            if (!ch.matches("[2-5]")) {
+                view.showMessage("Invalid.");
+                continue;
+            }
+            String sn = (pre != null && !pre.isBlank() && in.readLine("Student No. [Enter=" + pre + "]: ").isEmpty())
+                    ? pre
+                    : in.readNonEmpty("Student No.: ");
             Student st = svc.findStudent(sn);
-            if (st == null) { view.showMessage("Not found."); continue; }
+            if (st == null) {
+                view.showMessage("Not found.");
+                continue;
+            }
             switch (ch) {
-                case "1" -> {
+                case "2" -> {
                     svc.setFees(sn,
                             in.readPositiveDouble("Tuition Fee: "),
                             in.readPositiveDouble("Registration Fee: "),
                             in.readPositiveDouble("Lab Fee: "),
                             in.readPositiveDouble("Misc Fee: "));
-                    if (isYes(in.readLine("Waive? (y/n): "))) svc.waiveFee(sn, in.readPositiveDouble("Waive Amount: "));
+                    if (isYes(in.readLine("Discount / Waive? (y/n): "))) {
+                        svc.waiveFee(sn, in.readPositiveDouble("Discount / Waive Amount: "));
+                    }
                     billing(svc.findStudent(sn), sn);
                 }
-                case "2" -> { svc.waiveFee(sn, in.readPositiveDouble("Waive Amount: ")); billing(svc.findStudent(sn), sn); }
                 case "3" -> {
                     billing(st, sn);
                     String res = svc.recordPayment(sn, in.readPositiveDouble("Amount: "), in.readNonEmpty("Method: "));
                     view.showMessage(res);
-                    if (res.startsWith("Paid.")) view.showMessage("SUCCESSFULLY ENROLLED!");
+                    view.showMessage("SUCCESSFULLY ENROLLED!");
                     billing(svc.findStudent(sn), sn);
                 }
                 case "4" -> billing(st, sn);
@@ -211,7 +265,12 @@ public class EnrollmentController {
                 case "2" -> {
                     var r = svc.getEnrollmentsBySubject(in.readNonEmpty("Subject Code: "));
                     view.printEnrollments(r);
-                    if (!r.isEmpty()) { String rec = in.readLine("Record ID (Enter=skip): "); if (!rec.isEmpty()) view.showMessage(svc.updateGrade(rec, in.readNonEmpty("Grade: ")) ? "Graded." : "Not found."); }
+                    if (!r.isEmpty()) {
+                        String rec = in.readLine("Record ID (Enter=skip): ");
+                        if (!rec.isEmpty()) {
+                            view.showMessage(svc.updateGrade(rec, in.readNonEmpty("Grade: ")) ? "Graded." : "Not found.");
+                        }
+                    }
                 }
                 case "0" -> { return; }
                 default -> view.showMessage("Invalid.");
