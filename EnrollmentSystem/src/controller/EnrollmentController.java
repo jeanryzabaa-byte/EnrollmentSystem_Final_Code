@@ -193,33 +193,20 @@ public class EnrollmentController {
     private void cashier(String pre) {
         while (true) {
             view.showMessage("\n=========== CASHIERING & TUITION MODULE ===========");
-            view.showMessage("1. View Fees");
-            view.showMessage("2. Set / Update Fees (Tuition, Reg, Lab, Misc, Waiver)");
-            view.showMessage("3. Record Tuition Payment");
-            view.showMessage("4. View Assessment Slip & Tuition Balance");
-            view.showMessage("5. View Student Payment History");
-            view.showMessage("6. View Students Record");
+            view.showMessage("1. Set / Update Fees (Tuition, Reg, Lab, Misc, Waiver)");
+            view.showMessage("2. Record Tuition Payment");
+            view.showMessage("3. View Assessment Slip & Tuition Balance");
+            view.showMessage("4. View Student Payment History");
+            view.showMessage("5. View Students Record");
             view.showMessage("0. Logout");
             view.showMessage("==================================================");
             String ch = in.readLine("Choice: ");
             if (ch.equals("0")) return;
-            if (ch.equals("6")) {
+            if (ch.equals("5")) {
                 showEnrolledStudentsWithDetails();
                 continue;
             }
-            if (ch.equals("1")) {
-                String sn = (pre != null && !pre.isBlank() && in.readLine("Student No. [Enter=" + pre + "]: ").isEmpty())
-                        ? pre
-                        : in.readNonEmpty("Student No.: ");
-                view.showMessage("\n--- FEES (" + sn + ") ---");
-                view.showMessage("  * Tuition Fee: " + String.format("%.2f", svc.getTuitionFee(sn)));
-                view.showMessage("  * Registration Fee: " + String.format("%.2f", svc.getRegistrationFee(sn)));
-                view.showMessage("  * Lab Fee: " + String.format("%.2f", svc.getLabFee(sn)));
-                view.showMessage("  * Misc Fee: " + String.format("%.2f", svc.getMiscFee(sn)));
-                view.showMessage("  * Waive / Discount: " + String.format("%.2f", svc.getWaivedAmount(sn)));
-                continue;
-            }
-            if (!ch.matches("[2-5]")) {
+            if (!ch.matches("[1-4]")) {
                 view.showMessage("Invalid.");
                 continue;
             }
@@ -232,7 +219,7 @@ public class EnrollmentController {
                 continue;
             }
             switch (ch) {
-                case "2" -> {
+                case "1" -> {
                     svc.setFees(sn,
                             in.readPositiveDouble("Tuition Fee: "),
                             in.readPositiveDouble("Registration Fee: "),
@@ -243,15 +230,15 @@ public class EnrollmentController {
                     }
                     billing(svc.findStudent(sn), sn);
                 }
-                case "3" -> {
+                case "2" -> {
                     billing(st, sn);
                     String res = svc.recordPayment(sn, in.readPositiveDouble("Amount: "), in.readNonEmpty("Method: "));
                     view.showMessage(res);
                     view.showMessage("SUCCESSFULLY ENROLLED!");
                     billing(svc.findStudent(sn), sn);
                 }
-                case "4" -> billing(st, sn);
-                case "5" -> view.printPayments(svc.getPaymentsByStudent(sn));
+                case "3" -> billing(st, sn);
+                case "4" -> view.printPayments(svc.getPaymentsByStudent(sn));
             }
         }
     }
