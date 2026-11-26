@@ -128,7 +128,7 @@ public class EnrollmentController {
         }
     }
 
-    private void student(User u) {
+   private void student(User u) {
         Student base = svc.resolveStudentForPortal(u.getLinkedId());
         String fb = base != null ? base.getStudentNumber() : u.getLinkedId();
         while (true) {
@@ -139,9 +139,18 @@ public class EnrollmentController {
             String id = cur != null ? cur.getStudentNumber() : fb;
             switch (c) {
                 case "1" -> view.showMessage(cur == null ? "No record." : cur.toString());
-                case "2" -> { var lines = svc.getStudentSubjectsWithInstructor(id); if (lines.isEmpty()) view.showMessage("[NOT ENROLLED]"); else lines.forEach(l -> view.showMessage("  " + l)); }
-                case "3" -> { if (cur == null) view.showMessage("No record."); else billing(cur, id); }
-                case "4" -> view.showMessage(svc.submitShiftingRequest(id, in.readNonEmpty("Target: "), in.readNonEmpty("Reason: ")) + " | OKAY / NADAWAT NA");
+                case "2" -> {
+                    var lines = svc.getStudentSubjectsWithInstructor(id);
+                    if (lines.isEmpty()) view.showMessage("[NOT ENROLLED]");
+                    else lines.forEach(l -> view.showMessage("  " + l));
+                }
+                case "3" -> {
+                    if (cur == null) view.showMessage("No record.");
+                    else billing(cur, id);
+                }
+                case "4" -> view.showMessage(
+                        svc.submitShiftingRequest(id, in.readNonEmpty("Target: "), in.readNonEmpty("Reason: "))
+                        + " | Successfully shifted");
                 case "5" -> view.printShiftingRequests(svc.getShiftingRequestsByStudent(id));
                 default -> view.showMessage("Invalid.");
             }
