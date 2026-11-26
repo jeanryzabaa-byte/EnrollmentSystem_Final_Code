@@ -28,7 +28,7 @@ public class EnrollmentController {
             if (r.contains("ADMIN")) admin();
             else if (r.contains("REGISTRAR")) registrar();
             else if (r.contains("CASHIER")) cashier(null);
-            else if (r.contains("STUDENT")) student(u);
+            else if (r.contains("STUDENT") || r.contains("ENROLLMENT")) enrollmentForm(u);
             else if (r.contains("INSTRUCTOR")) instructor(u);
         }
     }
@@ -127,21 +127,51 @@ public class EnrollmentController {
         }
     }
 
-    private void student(User u) {
+    private void enrollmentForm(User u) {
         Student base = svc.resolveStudentForPortal(u.getLinkedId());
         String fb = base != null ? base.getStudentNumber() : u.getLinkedId();
         while (true) {
-            view.showStudentMenu(fb);
+            view.showMessage("\n=== ENROLLMENT FORM (" + fb + ") ===");
+            view.showMessage("1. Fill Up Student Info");
+            view.showMessage("2. View My Info & Enrolled Subjects");
+            view.showMessage("3. Request Add Subject");
+            view.showMessage("4. View Assessment Slip");
+            view.showMessage("5. Submit Shifting Request");
+            view.showMessage("0. Logout");
             String c = in.readLine("Choice: ");
             if (c.equals("0")) return;
             Student cur = svc.resolveStudentForPortal(u.getLinkedId());
             String id = cur != null ? cur.getStudentNumber() : fb;
             switch (c) {
-                case "1" -> view.showMessage(cur == null ? "No record." : cur.toString());
-                case "2" -> { var lines = svc.getStudentSubjectsWithInstructor(id); if (lines.isEmpty()) view.showMessage("[NOT ENROLLED]"); else lines.forEach(l -> view.showMessage("  " + l)); }
-                case "3" -> { if (cur == null) view.showMessage("No record."); else billing(cur, id); }
-                case "4" -> view.showMessage(svc.submitShiftingRequest(id, in.readNonEmpty("Target: "), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
-                case "5" -> view.printShiftingRequests(svc.getShiftingRequestsByStudent(id));
+                case "1" -> {
+                    String name = in.readNonEmpty("Full Name: ");
+                    String course = in.readNonEmpty("Course: ");
+                    int yr = in.readInt("Year (1-5): ", 1, 5);
+                    if (cur == null) {
+                        String created = svc.addStudentWithType(id, name, course, yr, "REGULAR");
+                        view.showMessage(created != null ? "Form submitted! ID: " + created : "Already exists.");
+                    } else {
+                        cur.setFullName(name.trim());
+                        cur.setCourse(course.trim().toUpperCase());
+                        cur.setYearLevel(yr);
+                        svc.syncStudent(id);
+                        view.showMessage("Enrollment form updated.");
+                    }
+                }
+                case "2" -> {
+                    view.showMessage(cur == null ? "No record." : cur.toString());
+                    var lines = svc.getStudentSubjectsWithInstructor(id);
+                    if (lines.isEmpty()) view.showMessage("[NOT ENROLLED]");
+                    else lines.forEach(l -> view.showMessage("  " + l));
+                }
+                case "3" -> {
+                    svc.getSubjects().forEach(s -> view.showMessage("  " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u)"));
+                    String code = in.readNonEmpty("Subject Code to Request: ");
+                    String sem = in.readNonEmpty("Semester: ");
+                    view.showMessage(svc.enrollStudent(id, code, sem));
+                }
+                case "4" -> { if (cur == null) view.showMessage("No record."); else billing(cur, id); }
+                case "5" -> view.showMessage(svc.submitShiftingRequest(id, in.readNonEmpty("Target: "), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
                 default -> view.showMessage("Invalid.");
             }
         }
