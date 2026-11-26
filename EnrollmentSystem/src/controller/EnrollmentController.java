@@ -154,7 +154,13 @@ public class EnrollmentController {
                     billing(svc.findStudent(sn), sn);
                 }
                 case "2" -> { svc.waiveFee(sn, in.readPositiveDouble("Waive Amount: ")); billing(svc.findStudent(sn), sn); }
-                case "3" -> { billing(st, sn); view.showMessage(svc.recordPayment(sn, in.readPositiveDouble("Amount: "), in.readNonEmpty("Method: "))); billing(st, sn); }
+                case "3" -> {
+                    billing(st, sn);
+                    String res = svc.recordPayment(sn, in.readPositiveDouble("Amount: "), in.readNonEmpty("Method: "));
+                    view.showMessage(res);
+                    if (res.startsWith("Paid.")) view.showMessage("SUCCESSFULLY ENROLLED!");
+                    billing(svc.findStudent(sn), sn);
+                }
                 case "4" -> billing(st, sn);
                 case "5" -> view.printPayments(svc.getPaymentsByStudent(sn));
             }

@@ -62,7 +62,9 @@ public class EnrollmentService {
 
     public void syncStudent(String sn) {
         Student st = findStudent(sn); if (st == null) return;
-        st.setStatus(getEnrollmentsByStudent(st.getStudentNumber()).isEmpty() ? "REGISTERED" : "ENROLLED");
+        boolean hasEnroll = !getEnrollmentsByStudent(st.getStudentNumber()).isEmpty();
+        boolean hasPaid = calculateTotalPaid(st.getStudentNumber()) > 0;
+        st.setStatus(hasPaid ? "SUCCESSFULLY ENROLLED!" : (hasEnroll ? "ENROLLED" : "REGISTERED"));
         List<Student> all = students.findAll();
         for (int i = 0; i < all.size(); i++) if (all.get(i).getStudentNumber().equalsIgnoreCase(st.getStudentNumber())) { all.set(i, st); break; }
         students.saveAll(all);
@@ -184,7 +186,8 @@ public class EnrollmentService {
         List<Payment> list = pays.findAll();
         String id = "PAY-" + (list.size() + 1) + "-" + System.currentTimeMillis() % 10000;
         list.add(new Payment(id, sn.trim(), amt, method.trim().toUpperCase(), LocalDate.now().toString()));
-        pays.saveAll(list); syncStudent(sn.trim()); return "Paid. Receipt: " + id;
+        pays.saveAll(list); syncStudent(sn.trim());
+        return "Paid. Receipt: " + id + " | SUCCESSFULLY ENROLLED!";
     }
 
     public List<Payment> getPaymentsByStudent(String sn) { return pays.findAll().stream().filter(p -> p.getStudentNumber().equalsIgnoreCase(sn.trim())).toList(); }
