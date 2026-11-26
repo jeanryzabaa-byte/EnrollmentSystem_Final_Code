@@ -88,12 +88,12 @@ public class EnrollmentController {
 
     private void shifting() {
         if (in.readLine("1. Submit | 2. View/Process: ").equals("1")) {
-            view.showMessage(svc.submitShiftingRequest(in.readNonEmpty("Student No.: "), in.readNonEmpty("Target Course: "), in.readNonEmpty("Reason: ")) + " | OKAY / NADAWAT NA");
+            view.showMessage(svc.submitShiftingRequest(in.readNonEmpty("Student No.: "), in.readNonEmpty("Target Course: "), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
             return;
         }
         var reqs = svc.getShiftingRequests();
         if (reqs.isEmpty()) { view.showMessage("None."); return; }
-        reqs.forEach(r -> view.showMessage(r + " | OKAY / NADAWAT NA"));
+        reqs.forEach(r -> view.showMessage(r + " | Successfully shifted"));
         String id = in.readLine("Request ID (Enter=skip): ");
         if (!id.isEmpty()) view.showMessage(svc.processShiftingRequest(id, isYes(in.readLine("Approve? (y/n): "))) ? "Updated." : "Not found.");
     }
@@ -105,13 +105,12 @@ public class EnrollmentController {
             if (ch.equals("0")) return;
             if (ch.equals("6")) { svc.getStudents().forEach(s -> view.showMessage("  * " + s + " | Bal: " + String.format("%.2f", svc.calculateBalance(s.getStudentNumber())))); continue; }
             if (ch.equals("7")) {
-                String sn = (pre != null && !pre.isBlank() && in.readLine("Student No. [Enter=" + pre + "]: ").isEmpty()) ? pre : in.readNonEmpty("Student No.: ");
                 view.showMessage("\n--- FEES ---");
                 view.showMessage("  * Registration Fee: 150.00");
                 svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + ": 150.00"));
-                view.showMessage("  * Lab: " + String.format("%.2f", svc.getLabFee(sn)));
-                view.showMessage("  * Misc: " + String.format("%.2f", svc.getMiscFee(sn)));
-                view.showMessage("  * Waive: " + String.format("%.2f", svc.getWaivedAmount(sn)));
+                view.showMessage("  * Lab: " + String.format("%.2f", svc.getLabFee("")));
+                view.showMessage("  * Misc: " + String.format("%.2f", svc.getMiscFee("")));
+                view.showMessage("  * Waive: " + String.format("%.2f", svc.getWaivedAmount("")));
                 continue;
             }
             if (!ch.matches("[1-5]")) { view.showMessage("Invalid."); continue; }
@@ -128,7 +127,7 @@ public class EnrollmentController {
         }
     }
 
-   private void student(User u) {
+    private void student(User u) {
         Student base = svc.resolveStudentForPortal(u.getLinkedId());
         String fb = base != null ? base.getStudentNumber() : u.getLinkedId();
         while (true) {
@@ -139,18 +138,9 @@ public class EnrollmentController {
             String id = cur != null ? cur.getStudentNumber() : fb;
             switch (c) {
                 case "1" -> view.showMessage(cur == null ? "No record." : cur.toString());
-                case "2" -> {
-                    var lines = svc.getStudentSubjectsWithInstructor(id);
-                    if (lines.isEmpty()) view.showMessage("[NOT ENROLLED]");
-                    else lines.forEach(l -> view.showMessage("  " + l));
-                }
-                case "3" -> {
-                    if (cur == null) view.showMessage("No record.");
-                    else billing(cur, id);
-                }
-                case "4" -> view.showMessage(
-                        svc.submitShiftingRequest(id, in.readNonEmpty("Target: "), in.readNonEmpty("Reason: "))
-                        + " | Successfully shifted");
+                case "2" -> { var lines = svc.getStudentSubjectsWithInstructor(id); if (lines.isEmpty()) view.showMessage("[NOT ENROLLED]"); else lines.forEach(l -> view.showMessage("  " + l)); }
+                case "3" -> { if (cur == null) view.showMessage("No record."); else billing(cur, id); }
+                case "4" -> view.showMessage(svc.submitShiftingRequest(id, in.readNonEmpty("Target: "), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
                 case "5" -> view.printShiftingRequests(svc.getShiftingRequestsByStudent(id));
                 default -> view.showMessage("Invalid.");
             }
