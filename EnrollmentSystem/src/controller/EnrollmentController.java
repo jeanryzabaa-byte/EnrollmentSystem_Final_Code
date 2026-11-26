@@ -28,8 +28,8 @@ public class EnrollmentController {
             if (r.contains("ADMIN")) admin();
             else if (r.contains("REGISTRAR")) registrar();
             else if (r.contains("CASHIER")) cashier(null);
-            else if (r.contains("STUDENT") || r.contains("ENROLLMENT")) enrollmentForm(u);
             else if (r.contains("INSTRUCTOR")) instructor(u);
+            else view.showMessage("No Student Portal. Please proceed to Registrar for Enrollment.");
         }
     }
 
@@ -55,13 +55,30 @@ public class EnrollmentController {
 
     private void registrar() {
         while (true) {
-            view.showRegistrarMenu();
+            view.showMessage("\n=========== REGISTRAR & ENROLLMENT MODULE ===========");
+            view.showMessage("1. Enrollment Form (Regular Student)");
+            view.showMessage("2. Enrollment Form (Transferee Student)");
+            view.showMessage("3. View Enrolled Students");
+            view.showMessage("4. Add Subject / Request Add Subject");
+            view.showMessage("5. View All Subjects");
+            view.showMessage("6. Shifting Requests (Fill Up / View & Process)");
+            view.showMessage("0. Logout");
+            view.showMessage("=====================================================");
             switch (in.readLine("Choice: ")) {
                 case "1" -> enrollFlow("REGULAR", false);
                 case "2" -> enrollFlow("TRANSFEREE", true);
                 case "3" -> view.printStudents(svc.getStudents());
-                case "4" -> view.showMessage(svc.addSubject(in.readNonEmpty("Code: "), in.readNonEmpty("Title: "), in.readInt("Units (1-10): ", 1, 10), in.readPositiveDouble("Rate/Unit: "), in.readLine("Instructor (opt): ")) ? "Added." : "Exists.");
-                case "5" -> svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u @ " + String.format("%.2f", s.getFeePerUnit()) + ")"));
+                case "4" -> {
+                    String mode = in.readLine("1. Add New Subject | 2. Request/Enroll Subject to Student: ");
+                    if (mode.equals("1")) {
+                        view.showMessage(svc.addSubject(in.readNonEmpty("Code: "), in.readNonEmpty("Title: "), in.readInt("Units (1-10): ", 1, 10), in.readPositiveDouble("Rate/Unit: "), in.readLine("Instructor (opt): ")) ? "Subject Added." : "Exists.");
+                    } else {
+                        String sn = in.readNonEmpty("Student No.: ");
+                        svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u)"));
+                        view.showMessage(svc.enrollStudent(sn, in.readNonEmpty("Subject Code: "), in.readNonEmpty("Semester: ")));
+                    }
+                }
+                case "5" -> svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u @ " + String.format("%.2f", s.getFeePerUnit()) + ") | " + s.getInstructor()));
                 case "6" -> shifting();
                 case "0" -> { return; }
                 default -> view.showMessage("Invalid.");
@@ -70,24 +87,32 @@ public class EnrollmentController {
     }
 
     private void enrollFlow(String type, boolean trans) {
+        view.showMessage("\n--- ENROLLMENT FORM (" + type + ") ---");
         String id = svc.addStudentWithType(in.readLine("Student No. (Enter=auto): "),
-                in.readNonEmpty("Name: ") + (trans ? " [From: " + in.readNonEmpty("Prev School: ") + "]" : ""),
+                in.readNonEmpty("Full Name: ") + (trans ? " [From: " + in.readNonEmpty("Prev School: ") + "]" : ""),
                 in.readNonEmpty("Course: "), in.readInt("Year (1-5): ", 1, 5), type);
         if (id == null) { view.showMessage("Exists."); return; }
         view.showMessage("Enrolled ID: " + id);
-        if (isYes(in.readLine("Enroll subjects? (y/n): "))) {
+
+        if (isYes(in.readLine("View & Select Subjects now? (y/n): "))) {
             String sem = in.readNonEmpty("Semester: ");
             do {
-                svc.getSubjects().forEach(s -> view.showMessage("  " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u)"));
-                view.showMessage(svc.enrollStudent(id, in.readNonEmpty("Subject Code: "), sem));
-            } while (isYes(in.readLine("Another? (y/n): ")));
+                view.showMessage("\n--- AVAILABLE SUBJECTS ---");
+                svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u) | " + s.getInstructor()));
+                view.showMessage(svc.enrollStudent(id, in.readNonEmpty("Choose Subject Code: "), sem));
+            } while (isYes(in.readLine("Add another subject? (y/n): ")));
         }
+
+        if (isYes(in.readLine("Submit Shifting Request? (y/n): "))) {
+            view.showMessage(svc.submitShiftingRequest(id, in.readNonEmpty("Target Course: "), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
+        }
+
         svc.syncStudent(id);
         if (isYes(in.readLine("Go to Cashier? (y/n): "))) cashier(id);
     }
 
     private void shifting() {
-        if (in.readLine("1. Submit | 2. View/Process: ").equals("1")) {
+        if (in.readLine("1. Fill Up Shifting Request | 2. View/Process: ").equals("1")) {
             view.showMessage(svc.submitShiftingRequest(in.readNonEmpty("Student No.: "), in.readNonEmpty("Target Course: "), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
             return;
         }
@@ -123,56 +148,6 @@ public class EnrollmentController {
                 case "3" -> { billing(st, sn); view.showMessage(svc.recordPayment(sn, in.readPositiveDouble("Amount: "), in.readNonEmpty("Method: "))); billing(st, sn); }
                 case "4" -> billing(st, sn);
                 case "5" -> view.printPayments(svc.getPaymentsByStudent(sn));
-            }
-        }
-    }
-
-    private void enrollmentForm(User u) {
-        Student base = svc.resolveStudentForPortal(u.getLinkedId());
-        String fb = base != null ? base.getStudentNumber() : u.getLinkedId();
-        while (true) {
-            view.showMessage("\n=== ENROLLMENT FORM (" + fb + ") ===");
-            view.showMessage("1. Fill Up Student Info");
-            view.showMessage("2. View My Info & Enrolled Subjects");
-            view.showMessage("3. Request Add Subject");
-            view.showMessage("4. View Assessment Slip");
-            view.showMessage("5. Submit Shifting Request");
-            view.showMessage("0. Logout");
-            String c = in.readLine("Choice: ");
-            if (c.equals("0")) return;
-            Student cur = svc.resolveStudentForPortal(u.getLinkedId());
-            String id = cur != null ? cur.getStudentNumber() : fb;
-            switch (c) {
-                case "1" -> {
-                    String name = in.readNonEmpty("Full Name: ");
-                    String course = in.readNonEmpty("Course: ");
-                    int yr = in.readInt("Year (1-5): ", 1, 5);
-                    if (cur == null) {
-                        String created = svc.addStudentWithType(id, name, course, yr, "REGULAR");
-                        view.showMessage(created != null ? "Form submitted! ID: " + created : "Already exists.");
-                    } else {
-                        cur.setFullName(name.trim());
-                        cur.setCourse(course.trim().toUpperCase());
-                        cur.setYearLevel(yr);
-                        svc.syncStudent(id);
-                        view.showMessage("Enrollment form updated.");
-                    }
-                }
-                case "2" -> {
-                    view.showMessage(cur == null ? "No record." : cur.toString());
-                    var lines = svc.getStudentSubjectsWithInstructor(id);
-                    if (lines.isEmpty()) view.showMessage("[NOT ENROLLED]");
-                    else lines.forEach(l -> view.showMessage("  " + l));
-                }
-                case "3" -> {
-                    svc.getSubjects().forEach(s -> view.showMessage("  " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u)"));
-                    String code = in.readNonEmpty("Subject Code to Request: ");
-                    String sem = in.readNonEmpty("Semester: ");
-                    view.showMessage(svc.enrollStudent(id, code, sem));
-                }
-                case "4" -> { if (cur == null) view.showMessage("No record."); else billing(cur, id); }
-                case "5" -> view.showMessage(svc.submitShiftingRequest(id, in.readNonEmpty("Target: "), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
-                default -> view.showMessage("Invalid.");
             }
         }
     }
