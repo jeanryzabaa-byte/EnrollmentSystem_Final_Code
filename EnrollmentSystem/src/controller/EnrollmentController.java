@@ -1,14 +1,11 @@
 package controller;
 
-import java.util.List;
 import model.*;
 import service.EnrollmentService;
 import util.InputValidator;
 import view.ConsoleView;
 
 public class EnrollmentController {
-    private static final List<String> COURSES = List.of("BSIT", "BSCS", "BSIS", "ACT", "ENTREP");
-
     private final EnrollmentService svc;
     private final ConsoleView view;
     private final InputValidator in;
@@ -84,6 +81,13 @@ public class EnrollmentController {
         }
     }
 
+    private void viewShiftedRecords() {
+        var reqs = svc.getShiftingRequests();
+        if (reqs.isEmpty()) { view.showMessage("No shifted records."); return; }
+        view.showMessage("\n--- SHIFTED RECORDS ---");
+        reqs.forEach(r -> view.showMessage("  * " + r + " | Successfully shifted"));
+    }
+
     private void admin() {
         while (true) {
             view.showAdminMenu();
@@ -108,26 +112,14 @@ public class EnrollmentController {
             view.showMessage("1. Enrollment Form (Regular Student)");
             view.showMessage("2. Enrollment Form (Transferee Student)");
             view.showMessage("3. View Enrolled Students");
-            view.showMessage("4. Add Subject / Request Add Subject");
-            view.showMessage("5. View All Subjects");
-            view.showMessage("6. Shifting Requests (Fill Up / View & Process)");
+            view.showMessage("6. View Shifted Records");
             view.showMessage("0. Logout");
             view.showMessage("=====================================================");
             switch (in.readLine("Choice: ")) {
                 case "1" -> enrollFlow("REGULAR", false);
                 case "2" -> enrollFlow("TRANSFEREE", true);
                 case "3" -> showEnrolledStudentsWithDetails();
-                case "4" -> {
-                    String mode = in.readLine("1. Add New Subject | 2. Request/Enroll Subject to Student: ");
-                    if (mode.equals("1")) {
-                        view.showMessage(svc.addSubject(in.readNonEmpty("Code: "), in.readNonEmpty("Title: "), in.readInt("Units (1-10): ", 1, 10), in.readPositiveDouble("Rate/Unit: "), in.readLine("Instructor (opt): ")) ? "Subject Added." : "Exists.");
-                    } else {
-                        String sn = in.readNonEmpty("Student No.: ");
-                        view.showMessage(svc.enrollStudent(sn, in.readNonEmpty("Subject Code: "), in.readNonEmpty("Semester: ")));
-                    }
-                }
-                case "5" -> svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + " - " + s.getTitle() + " (" + s.getUnits() + "u @ " + String.format("%.2f", s.getFeePerUnit()) + ") | " + s.getInstructor()));
-                case "6" -> shifting();
+                case "6" -> viewShiftedRecords();
                 case "0" -> { return; }
                 default -> view.showMessage("Invalid.");
             }
@@ -162,18 +154,6 @@ public class EnrollmentController {
 
         svc.syncStudent(id);
         if (isYes(in.readLine("Go to Cashier? (y/n): "))) cashier(id);
-    }
-
-    private void shifting() {
-        if (in.readLine("1. Fill Up Shifting Request | 2. View/Process: ").equals("1")) {
-            view.showMessage(svc.submitShiftingRequest(in.readNonEmpty("Student No.: "), readCourseChoice(), in.readNonEmpty("Reason: ")) + " | Successfully shifted");
-            return;
-        }
-        var reqs = svc.getShiftingRequests();
-        if (reqs.isEmpty()) { view.showMessage("None."); return; }
-        reqs.forEach(r -> view.showMessage(r + " | Successfully shifted"));
-        String id = in.readLine("Request ID (Enter=skip): ");
-        if (!id.isEmpty()) view.showMessage(svc.processShiftingRequest(id, isYes(in.readLine("Approve? (y/n): "))) ? "Updated." : "Not found.");
     }
 
     private void cashier(String pre) {
