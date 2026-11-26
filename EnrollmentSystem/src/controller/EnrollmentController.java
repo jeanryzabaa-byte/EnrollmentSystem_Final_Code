@@ -88,9 +88,16 @@ public class EnrollmentController {
 
     private void enrollFlow(String type, boolean trans) {
         view.showMessage("\n--- ENROLLMENT FORM (" + type + ") ---");
-        String id = svc.addStudentWithType(in.readLine("Student No. (Enter=auto): "),
-                in.readNonEmpty("Full Name: ") + (trans ? " [From: " + in.readNonEmpty("Prev School: ") + "]" : ""),
-                in.readNonEmpty("Course: "), in.readInt("Year (1-5): ", 1, 5), type);
+        String sn = in.readLine("Student No. (Enter=auto): ");
+        String name = in.readNonEmpty("Full Name: ");
+        if (trans) {
+            String prevSchool = in.readNonEmpty("Prev School: ");
+            name = name + " [From: " + prevSchool + "]";
+        }
+        String course = in.readNonEmpty("Course: ");
+        int yr = in.readInt("Year (1-5): ", 1, 5);
+
+        String id = svc.addStudentWithType(sn, name, course, yr, type);
         if (id == null) { view.showMessage("Exists."); return; }
         view.showMessage("Enrolled ID: " + id);
 
