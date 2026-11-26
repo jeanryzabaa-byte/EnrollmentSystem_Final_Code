@@ -130,12 +130,13 @@ public class EnrollmentController {
             if (ch.equals("0")) return;
             if (ch.equals("6")) { svc.getStudents().forEach(s -> view.showMessage("  * " + s + " | Bal: " + String.format("%.2f", svc.calculateBalance(s.getStudentNumber())))); continue; }
             if (ch.equals("7")) {
-                view.showMessage("\n--- FEES ---");
-                view.showMessage("  * Registration Fee: 150.00");
-                svc.getSubjects().forEach(s -> view.showMessage("  * " + s.getCode() + ": 150.00"));
-                view.showMessage("  * Lab: " + String.format("%.2f", svc.getLabFee("")));
-                view.showMessage("  * Misc: " + String.format("%.2f", svc.getMiscFee("")));
-                view.showMessage("  * Waive: " + String.format("%.2f", svc.getWaivedAmount("")));
+                String sn = (pre != null && !pre.isBlank()) ? pre : in.readNonEmpty("Student No.: ");
+                view.showMessage("\n--- FEES (" + sn + ") ---");
+                view.showMessage("  * Tuition Fee: " + String.format("%.2f", svc.getTuitionFee(sn)));
+                view.showMessage("  * Registration Fee: " + String.format("%.2f", svc.getRegistrationFee(sn)));
+                view.showMessage("  * Lab: " + String.format("%.2f", svc.getLabFee(sn)));
+                view.showMessage("  * Misc: " + String.format("%.2f", svc.getMiscFee(sn)));
+                view.showMessage("  * Waive: " + String.format("%.2f", svc.getWaivedAmount(sn)));
                 continue;
             }
             if (!ch.matches("[1-5]")) { view.showMessage("Invalid."); continue; }
@@ -143,8 +144,16 @@ public class EnrollmentController {
             Student st = svc.findStudent(sn);
             if (st == null) { view.showMessage("Not found."); continue; }
             switch (ch) {
-                case "1" -> { svc.setAdditionalFees(sn, in.readPositiveDouble("Lab: "), in.readPositiveDouble("Misc: ")); if (isYes(in.readLine("Waive? (y/n): "))) svc.waiveFee(sn, in.readPositiveDouble("Waive: ")); billing(svc.findStudent(sn), sn); }
-                case "2" -> { svc.waiveFee(sn, in.readPositiveDouble("Waive: ")); billing(svc.findStudent(sn), sn); }
+                case "1" -> {
+                    svc.setFees(sn,
+                            in.readPositiveDouble("Tuition Fee: "),
+                            in.readPositiveDouble("Registration Fee: "),
+                            in.readPositiveDouble("Lab Fee: "),
+                            in.readPositiveDouble("Misc Fee: "));
+                    if (isYes(in.readLine("Waive? (y/n): "))) svc.waiveFee(sn, in.readPositiveDouble("Waive Amount: "));
+                    billing(svc.findStudent(sn), sn);
+                }
+                case "2" -> { svc.waiveFee(sn, in.readPositiveDouble("Waive Amount: ")); billing(svc.findStudent(sn), sn); }
                 case "3" -> { billing(st, sn); view.showMessage(svc.recordPayment(sn, in.readPositiveDouble("Amount: "), in.readNonEmpty("Method: "))); billing(st, sn); }
                 case "4" -> billing(st, sn);
                 case "5" -> view.printPayments(svc.getPaymentsByStudent(sn));
@@ -170,8 +179,10 @@ public class EnrollmentController {
     }
 
     private void billing(Student st, String sn) {
-        double t = svc.calculateTotalAssessment(sn), l = svc.getLabFee(sn), m = svc.getMiscFee(sn), w = svc.getWaivedAmount(sn);
+        double tu = svc.getTuitionFee(sn), reg = svc.getRegistrationFee(sn);
+        double t = tu + reg, l = svc.getLabFee(sn), m = svc.getMiscFee(sn), w = svc.getWaivedAmount(sn);
         double tot = Math.max(0, t + l + m - w), p = svc.calculateTotalPaid(sn);
+        view.showMessage("  [Breakdown] Tuition: " + String.format("%.2f", tu) + " | Registration Fee: " + String.format("%.2f", reg));
         view.printDetailedBilling(st, t, l, m, w, tot, p, Math.max(0, tot - p));
     }
 }
